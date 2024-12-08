@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 
 from selenium_management import start_driver, open_link, get_wait_element, get_wait_elements, close_driver, get_links
 from utils import extract_original_link
+from excel import PyXLWriter
 
 
 driver = start_driver()
@@ -220,5 +221,32 @@ for account_link in account_links:
 close_driver(driver=driver)
 
 
+#########################
+##### ЗАПИСЬ ДАННЫХ #####
+#########################
+
+#####################
+### В json формат ###
+#####################
 with open('data.json', 'w') as f:
     data = json.dump(accounts, indent=4, ensure_ascii=False, fp=f)
+    
+#################
+### В таблицу ###
+#################
+pyxl = PyXLWriter(colors=2)
+# Хедеры
+pyxl[1, 1] = "Ссылка на аккаунт"
+pyxl[1, 2] = "Описание страницы"
+pyxl[1, 3] = "Ссылки из контактов"
+# Данные
+for rid, account_item in enumerate(accounts):
+    r = rid + 2
+    pyxl[r, 1] = account_item.get('account_link')
+    pyxl[r, 2] = account_item.get('all_description')
+    pyxl[r, 3] = "\n------------------------------\n".join(account_item.get('links'))
+
+# Сохраняем файл
+pyxl.save("instagram_data.xlsx")
+
+    
