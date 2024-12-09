@@ -37,7 +37,7 @@ def open_link(driver: webdriver, link, attempts: int = 3, logs: bool = True) -> 
 
 
 def get_wait_element(driver: webdriver, by: By, searched_elem: str, delay: int = 30, attempts: int = 3,
-                     sleep: int = 1, is_error: bool = True, logs: bool = False) -> webdriver.remote.webelement.WebElement:
+                     sleep: int = 0, is_error: bool = True, logs: bool = False) -> webdriver.remote.webelement.WebElement:
     for attempt in range(attempts):
         try:
             time.sleep(sleep)
@@ -62,7 +62,7 @@ def get_wait_element(driver: webdriver, by: By, searched_elem: str, delay: int =
 
 
 def get_wait_elements(driver: webdriver, by: By, searched_elem: str, delay: int = 30, attempts: int = 3,
-                      sleep: int = 1, is_error: bool = True, logs: bool = False) -> List[webdriver.remote.webelement.WebElement]:
+                      sleep: int = 0, is_error: bool = True, logs: bool = False) -> List[webdriver.remote.webelement.WebElement]:
     for attempt in range(attempts):
         try:
             time.sleep(sleep)

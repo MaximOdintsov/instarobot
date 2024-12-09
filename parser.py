@@ -1,6 +1,8 @@
 import time
+import re
 import json
 from typing import List
+from datetime import datetime
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -11,9 +13,11 @@ from excel import PyXLWriter
 
 
 driver = start_driver()
-MAX_SCROLLS = 10
+MAX_SCROLLS = 20
 
-
+with open('time.txt', 'a') as f:
+    f.write(f'\n\nКол-во MAX_SCROLLS: "{MAX_SCROLLS}"\nНачало обработки: "{datetime.now()}"')
+    
 ###################
 ### Авторизация ###
 ###################
@@ -21,13 +25,28 @@ def auth(driver: webdriver, username: str, password: str):
     username = 'odintsovmaxim4@gmail.com'
     password = 'password1923DF!'
     open_link(driver=driver, link="https://www.instagram.com/")
-    username_element = get_wait_element(driver=driver, by=By.NAME, searched_elem='username')
+    username_element = get_wait_element(
+        driver=driver, 
+        by=By.NAME, 
+        searched_elem='username',
+        delay=5,
+    )
     username_element.send_keys(username)
 
-    password_element = get_wait_element(driver=driver, by=By.NAME, searched_elem='password')
+    password_element = get_wait_element(
+        driver=driver, 
+        by=By.NAME, 
+        searched_elem='password',
+        delay=5,
+    )
     password_element.send_keys(password)
 
-    enter_element = get_wait_element(driver=driver, by=By.XPATH, searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div/div[3]/button/div')
+    enter_element = get_wait_element(
+        driver=driver, 
+        by=By.XPATH, 
+        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div/div[3]/button/div',
+        delay=5,
+    )
     enter_element.click()
     time.sleep(5)
     return True
@@ -67,11 +86,8 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
         if new_height == last_height:
             break
         last_height = new_height
-        
     return post_links
 
-
-# Переход на страницу с постами
 turn_to_posts_page(driver=driver, query='%23rapmusic') # '%23r' == '#'
 post_links = get_post_links(driver, max_scrolls=MAX_SCROLLS)
 post_links = list(post_links)
@@ -81,7 +97,6 @@ print(f"Найдено {len(post_links)} ссылок на посты")
 ##################################
 ### Парсинг ссылок на аккаунты ###
 ##################################
-
 def accounts_parsing(post_links: List[str]) -> set:
     account_links = set()
     for post_link in post_links:
@@ -107,7 +122,7 @@ def accounts_parsing(post_links: List[str]) -> set:
                 driver=driver, 
                 by=By.XPATH, 
                 searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div/span/span[2]/a/span',
-                delay=5,
+                delay=2,
                 attempts=1,
                 is_error=False
             )
@@ -117,7 +132,7 @@ def accounts_parsing(post_links: List[str]) -> set:
                     driver=driver, 
                     by=By.XPATH, 
                     searched_elem='/html/body/div[6]/div[1]/div/div[2]/div/div/div',
-                    sleep=3,
+                    sleep=1,
                     delay=5,
                     attempts=1,
                     is_error=False
@@ -132,7 +147,7 @@ def accounts_parsing(post_links: List[str]) -> set:
                 driver=driver, 
                 by=By.XPATH, 
                 searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div',
-                delay=5,
+                delay=2,
                 attempts=1,
                 is_error=False
             )
@@ -145,19 +160,49 @@ def accounts_parsing(post_links: List[str]) -> set:
             new_links = get_links(accounts_parent)
             print(f'Найдены ссылки: {new_links}')
             account_links.update(new_links)
-            
     return account_links
-
 
 account_links = accounts_parsing(post_links)
 account_links = list(account_links)
 print(f"Найдено {len(account_links)} ссылок на аккаунты")
 
 
-
 ################################################
 ### Парсинг информации о найденных аккаунтах ###
 ################################################
+def parse_number_accurate(text: str) -> int:
+    """
+    Функция для преобразования текста в числовой формат
+    """
+    number_map = {
+        'тыс.': 1000,
+        'млн': 1000000,
+        'млн.': 1000000
+    }
+    number = re.findall(r'[\d\s,]+', str(text))
+    multiplier = 1
+    for key, value in number_map.items():
+        if key in text:
+            multiplier = value
+            break
+    if number:
+        clean_number = number[0].replace(' ', '').replace(',', '.')
+        return int(float(clean_number) * multiplier)
+    return 0
+
+def parse_activity_data(data_list: list) -> dict:
+    """
+    Функция распределения списка основной информации об аккаунте
+    """
+    result = {'posts': 0, 'subscribers': 0, 'subscriptions': 0}
+    for item in data_list:
+        if 'публикац' in item:
+            result['posts'] = parse_number_accurate(item)
+        elif 'подписчик' in item:
+            result['subscribers'] = parse_number_accurate(item)
+        elif any(word in item for word in ['подписок', 'подписки', 'подписка']):
+            result['subscriptions'] = parse_number_accurate(item)
+    return result
 
 
 def parsing_account_info(driver: webdriver, account_link: str) -> dict:
@@ -169,7 +214,11 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     
     links = None
     all_description = None
+    activity_attrs = {}
     
+    #################################
+    ### Парсинг описания аккаунта ###
+    #################################
     account_description_parent_element = get_wait_element(  # Элемент со всей указанной информацией об аккаунте
         driver=driver,
         by=By.XPATH,
@@ -199,7 +248,7 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
                 searched_elem='/html/body/div[6]/div[1]/div/div[2]/div/div/div/div',
                 delay=4,
                 attempts=1,
-                sleep=2,
+                sleep=1,
                 is_error=False
             )
             
@@ -208,11 +257,35 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
         if not links:  # Если в указанных ссылках нет "+ n"
             find_links = get_links(account_description_parent_element)
             links = [extract_original_link(find_link) for find_link in find_links]
-        
     print(f'\n___________________\nСсылка на аккаунт: {account_link}\nall_description: {all_description}\nСсылки: {links}')
-    account_info = {'account_link': account_link, 'all_description': all_description, 'links': links}
-    return account_info
 
+    ###################################
+    ### Парсинг активности аккаунта ###
+    ###################################
+    activity_account_parent_element = get_wait_element(  # Родительский элемент с кол-вом постов, подписчиков и подписок
+        driver=driver, 
+        by=By.XPATH, 
+        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/header/section[3]',
+        delay=3,
+        attempts=1,
+        is_error=False
+    )
+    if activity_account_parent_element:
+        activity_account_attributes_elements = get_wait_elements(  # Родительский элемент с кол-вом постов, подписчиков и подписок
+            driver=activity_account_parent_element, 
+            by=By.TAG_NAME, 
+            searched_elem='li',
+            delay=3,
+            attempts=1,
+            is_error=False
+        )
+        if activity_account_attributes_elements:
+            activity_list = [activity_account_attributes_element.text for activity_account_attributes_element in activity_account_attributes_elements]
+            activity_attrs = parse_activity_data(activity_list)
+            print(f'Найдены атрибуты активности: {activity_attrs}')
+
+    account_info = {'account_link': account_link, 'all_description': all_description, 'links': links} | activity_attrs
+    return account_info
 
 accounts = []
 for account_link in account_links:
@@ -225,28 +298,31 @@ close_driver(driver=driver)
 ##### ЗАПИСЬ ДАННЫХ #####
 #########################
 
-#####################
-### В json формат ###
-#####################
+# Запись в json
 with open('data.json', 'w') as f:
     data = json.dump(accounts, indent=4, ensure_ascii=False, fp=f)
     
-#################
-### В таблицу ###
-#################
+# Запись в таблицу
 pyxl = PyXLWriter(colors=2)
 # Хедеры
 pyxl[1, 1] = "Ссылка на аккаунт"
 pyxl[1, 2] = "Описание страницы"
 pyxl[1, 3] = "Ссылки из контактов"
-# Данные
+pyxl[1, 4] = "Кол-во постов"
+pyxl[1, 5] = "Кол-во подписчиков"
+pyxl[1, 6] = "Кол-во подписок"
+# Запись данных в таблицу
 for rid, account_item in enumerate(accounts):
     r = rid + 2
     pyxl[r, 1] = account_item.get('account_link')
     pyxl[r, 2] = account_item.get('all_description')
     pyxl[r, 3] = "\n------------------------------\n".join(account_item.get('links'))
-
+    pyxl[r, 4] = str(account_item.get('posts'))
+    pyxl[r, 5] = str(account_item.get('subscribers'))
+    pyxl[r, 6] = str(account_item.get('subscriptions'))
 # Сохраняем файл
 pyxl.save("instagram_data.xlsx")
 
     
+with open('time.txt', 'a') as f:
+    f.write(f'\nКонец обработки: "{datetime.now()}"')
