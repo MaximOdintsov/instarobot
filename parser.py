@@ -15,7 +15,7 @@ from excel import PyXLWriter
 driver = start_driver()
 MAX_SCROLLS = 20
 
-with open('time.txt', 'a') as f:
+with open('data/time.txt', 'a') as f:
     f.write(f'\n\nКол-во MAX_SCROLLS: "{MAX_SCROLLS}"\nНачало обработки: "{datetime.now()}"')
     
 ###################
@@ -58,14 +58,17 @@ auth(driver=driver, username='odintsovmaxim4@gmail.com', password='password1923D
 ### Парсинг ссылок на посты ###
 ###############################
 def turn_to_posts_page(driver: webdriver, query: str):
-    """Переход на страницу с постами"""
+    """
+    Переход на страницу с постами
+    """
     link = f'https://www.instagram.com/explore/search/keyword/?q={query}'
     open_link(driver=driver, link=link)
     
 
 def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10) -> set:
-    """Скроллинг страниц и поиск ссылок"""
-
+    """
+    Скроллинг страниц и поиск ссылок
+    """
     last_height = driver.execute_script("return document.body.scrollHeight")
     post_links = set()
     max_scrolls += 1
@@ -97,72 +100,76 @@ print(f"Найдено {len(post_links)} ссылок на посты")
 ##################################
 ### Парсинг ссылок на аккаунты ###
 ##################################
-def accounts_parsing(post_links: List[str]) -> set:
-    account_links = set()
-    for post_link in post_links:
-        find_links = False
-        open_link(driver=driver, link=post_link)
+def accounts_parsing(post_link: str) -> list:
+    """
+    Функция для парсинга аккаунтов из поста
+    """
+    find_links = False
+    open_link(driver=driver, link=post_link)
+    
+    # Поиск одного аккаунта в посте
+    accounts_parent = get_wait_element(
+        driver=driver, 
+        by=By.XPATH, 
+        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div[1]/div/div/div/span/span',
+        delay=5,
+        attempts=1,
+        is_error=False
+    )
+    if accounts_parent:
+        print('Найдено в "Поиск одного аккаунта в посте"')
+        find_links = True
         
-        # Поиск одного аккаунта в посте
-        accounts_parent = get_wait_element(
+    # Поиск "ещё" в указанных аккаунтах поста
+    if find_links is False:
+        modal_accounts_element = get_wait_element(
             driver=driver, 
             by=By.XPATH, 
-            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div[1]/div/div/div/span/span',
-            delay=5,
+            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div/span/span[2]/a/span',
+            delay=2,
             attempts=1,
             is_error=False
         )
-        if accounts_parent:
-            print('Найдено в "Поиск одного аккаунта в посте"')
-            find_links = True
-            
-        # Поиск "ещё" в указанных аккаунтах поста
-        if find_links is False:
-            modal_accounts_element = get_wait_element(
-                driver=driver, 
-                by=By.XPATH, 
-                searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div/span/span[2]/a/span',
-                delay=2,
-                attempts=1,
-                is_error=False
-            )
-            if modal_accounts_element and 'ещё' in modal_accounts_element.text:
-                modal_accounts_element.click()  # Открытие модального окна с ссылками на аккаунты
-                accounts_parent = get_wait_element(
-                    driver=driver, 
-                    by=By.XPATH, 
-                    searched_elem='/html/body/div[6]/div[1]/div/div[2]/div/div/div',
-                    sleep=1,
-                    delay=5,
-                    attempts=1,
-                    is_error=False
-                )
-                if accounts_parent:
-                    print('Найдено в "Поиск "ещё" в указанных аккаунтах поста"')
-                    find_links = True
-        
-        # Поиск двух указанных аккаунтов в посте
-        if find_links is False:
+        if modal_accounts_element and 'ещё' in modal_accounts_element.text:
+            modal_accounts_element.click()  # Открытие модального окна с ссылками на аккаунты
             accounts_parent = get_wait_element(
                 driver=driver, 
                 by=By.XPATH, 
-                searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div',
-                delay=2,
+                searched_elem='/html/body/div[6]/div[1]/div/div[2]/div/div/div',
+                sleep=1,
+                delay=5,
                 attempts=1,
                 is_error=False
             )
             if accounts_parent:
-                print('Найдено в "Поиск двух указанных аккаунтов в посте"')
+                print('Найдено в "Поиск "ещё" в указанных аккаунтах поста"')
                 find_links = True
-        
-        # Поиск ссылок на аккаунты из родительского элемента
-        if find_links is True:
-            new_links = get_links(accounts_parent)
-            print(f'Найдены ссылки: {new_links}')
-            account_links.update(new_links)
-    return account_links
+    
+    # Поиск двух указанных аккаунтов в посте
+    if find_links is False:
+        accounts_parent = get_wait_element(
+            driver=driver, 
+            by=By.XPATH, 
+            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div',
+            delay=2,
+            attempts=1,
+            is_error=False
+        )
+        if accounts_parent:
+            print('Найдено в "Поиск двух указанных аккаунтов в посте"')
+            find_links = True
+    
+    # Поиск ссылок на аккаунты из родительского элемента
+    if find_links is True:
+        account_link = get_links(accounts_parent)
+        print(f'Найдены ссылки: {account_link}')
+        return account_link
 
-account_links = accounts_parsing(post_links)
+
+account_links = set()
+for post_link in post_links:
+    account_link = accounts_parsing(post_link)
+    account_links.update(account_link)
 account_links = list(account_links)
 print(f"Найдено {len(account_links)} ссылок на аккаунты")
 
@@ -212,7 +219,7 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     driver.get(account_link)
     time.sleep(3)
     
-    links = None
+    links = set()
     all_description = None
     activity_attrs = {}
     
@@ -230,9 +237,13 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     if account_description_parent_element:
         # Парсинг описания аккаунта
         all_description = account_description_parent_element.text
-
-        # Парсинг ссылок, указанных в контактах аккаунта
-        account_links_button_element = get_wait_element(  # Кнопка с указанными ссылками
+        
+        # Парсинг ссылок
+        # Из описания аккаунта
+        find_links_description = get_links(account_description_parent_element)
+        links.update([extract_original_link(find_link_description) for find_link_description in find_links_description])
+        # Из указанных контактов
+        account_links_button_element = get_wait_element(  # Кнопка для перехода в указанные контакты
             driver=account_description_parent_element,
             by=By.TAG_NAME,
             searched_elem='button',
@@ -240,23 +251,20 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
             attempts=1,
             is_error=False
         )
-        if account_links_button_element and '+' in account_links_button_element.text:  # Если указано несколько ссылок 
+        if account_links_button_element:
             account_links_button_element.click()  # Открытие модального окна с указанными ссылками
             link_parent_element = get_wait_element(  # Модальное окно с указанными ссылками
-                driver=account_links_button_element, 
+                driver=driver, 
                 by=By.XPATH, 
                 searched_elem='/html/body/div[6]/div[1]/div/div[2]/div/div/div/div',
                 delay=4,
                 attempts=1,
-                sleep=1,
+                sleep=2,
                 is_error=False
             )
             
-            find_links = get_links(link_parent_element)
-            links = [extract_original_link(find_link) for find_link in find_links]
-        if not links:  # Если в указанных ссылках нет "+ n"
-            find_links = get_links(account_description_parent_element)
-            links = [extract_original_link(find_link) for find_link in find_links]
+            find_links_modal = get_links(link_parent_element)
+            links.update([extract_original_link(find_link_modal) for find_link_modal in find_links_modal])
     print(f'\n___________________\nСсылка на аккаунт: {account_link}\nall_description: {all_description}\nСсылки: {links}')
 
     ###################################
@@ -284,13 +292,17 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
             activity_attrs = parse_activity_data(activity_list)
             print(f'Найдены атрибуты активности: {activity_attrs}')
 
-    account_info = {'account_link': account_link, 'all_description': all_description, 'links': links} | activity_attrs
+    account_info = {'account_link': account_link, 'all_description': all_description, 'links': list(links)} | activity_attrs
     return account_info
 
-accounts = []
-for account_link in account_links:
+
+accounts_info_list = []
+links_len = len(account_links)
+for idx, account_link in enumerate(account_links):
+    print(f'Парсинг акканута #{idx}...\tВсего аккаунтов: {links_len}')
     accounts_info = parsing_account_info(driver=driver, account_link=account_link)
-    accounts.append(accounts_info)
+    accounts_info_list.append(accounts_info)
+print(f'Спарсилась информация о {len(accounts_info_list)} аккаунтах.')
 close_driver(driver=driver)
 
 
@@ -299,8 +311,8 @@ close_driver(driver=driver)
 #########################
 
 # Запись в json
-with open('data.json', 'w') as f:
-    data = json.dump(accounts, indent=4, ensure_ascii=False, fp=f)
+with open('data/data.json', 'w') as f:
+    data = json.dump(accounts_info_list, indent=4, ensure_ascii=False, fp=f)
     
 # Запись в таблицу
 pyxl = PyXLWriter(colors=2)
@@ -312,7 +324,7 @@ pyxl[1, 4] = "Кол-во постов"
 pyxl[1, 5] = "Кол-во подписчиков"
 pyxl[1, 6] = "Кол-во подписок"
 # Запись данных в таблицу
-for rid, account_item in enumerate(accounts):
+for rid, account_item in enumerate(accounts_info_list):
     r = rid + 2
     pyxl[r, 1] = account_item.get('account_link')
     pyxl[r, 2] = account_item.get('all_description')
@@ -321,8 +333,8 @@ for rid, account_item in enumerate(accounts):
     pyxl[r, 5] = str(account_item.get('subscribers'))
     pyxl[r, 6] = str(account_item.get('subscriptions'))
 # Сохраняем файл
-pyxl.save("instagram_data.xlsx")
+pyxl.save("data/instagram_data.xlsx")
 
     
-with open('time.txt', 'a') as f:
+with open('data/time.txt', 'a') as f:
     f.write(f'\nКонец обработки: "{datetime.now()}"')
