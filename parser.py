@@ -1,5 +1,4 @@
 import time
-import re
 import json
 from typing import List
 from datetime import datetime
@@ -7,17 +6,12 @@ from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-from selenium_management import start_driver, open_link, get_wait_element, get_wait_elements, close_driver, get_links
-from utils import extract_original_link
-from excel import PyXLWriter
+from helpers.selenium_management import start_driver, open_link, get_wait_element, get_wait_elements, close_driver, get_links
+from helpers.utils import extract_original_link, parse_activity_data
+from helpers.excel import PyXLWriter
+import config
 
 
-driver = start_driver()
-MAX_SCROLLS = 20
-
-with open('data/time.txt', 'a') as f:
-    f.write(f'\n\nКол-во MAX_SCROLLS: "{MAX_SCROLLS}"\nНачало обработки: "{datetime.now()}"')
-    
 ###################
 ### Авторизация ###
 ###################
@@ -50,8 +44,6 @@ def auth(driver: webdriver, username: str, password: str):
     enter_element.click()
     time.sleep(5)
     return True
-
-auth(driver=driver, username='odintsovmaxim4@gmail.com', password='password1923DF!')
 
 
 ###############################
@@ -91,16 +83,11 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
         last_height = new_height
     return post_links
 
-turn_to_posts_page(driver=driver, query='%23rapmusic') # '%23r' == '#'
-post_links = get_post_links(driver, max_scrolls=MAX_SCROLLS)
-post_links = list(post_links)
-print(f"Найдено {len(post_links)} ссылок на посты")
-
 
 ##################################
 ### Парсинг ссылок на аккаунты ###
 ##################################
-def accounts_parsing(post_link: str) -> list:
+def accounts_parsing(driver: webdriver, post_link: str) -> list:
     """
     Функция для парсинга аккаунтов из поста
     """
@@ -164,54 +151,11 @@ def accounts_parsing(post_link: str) -> list:
         account_link = get_links(accounts_parent)
         print(f'Найдены ссылки: {account_link}')
         return account_link
-
-
-account_links = set()
-for post_link in post_links:
-    account_link = accounts_parsing(post_link)
-    account_links.update(account_link)
-account_links = list(account_links)
-print(f"Найдено {len(account_links)} ссылок на аккаунты")
-
+    
 
 ################################################
 ### Парсинг информации о найденных аккаунтах ###
 ################################################
-def parse_number_accurate(text: str) -> int:
-    """
-    Функция для преобразования текста в числовой формат
-    """
-    number_map = {
-        'тыс.': 1000,
-        'млн': 1000000,
-        'млн.': 1000000
-    }
-    number = re.findall(r'[\d\s,]+', str(text))
-    multiplier = 1
-    for key, value in number_map.items():
-        if key in text:
-            multiplier = value
-            break
-    if number:
-        clean_number = number[0].replace(' ', '').replace(',', '.')
-        return int(float(clean_number) * multiplier)
-    return 0
-
-def parse_activity_data(data_list: list) -> dict:
-    """
-    Функция распределения списка основной информации об аккаунте
-    """
-    result = {'posts': 0, 'subscribers': 0, 'subscriptions': 0}
-    for item in data_list:
-        if 'публикац' in item:
-            result['posts'] = parse_number_accurate(item)
-        elif 'подписчик' in item:
-            result['subscribers'] = parse_number_accurate(item)
-        elif any(word in item for word in ['подписок', 'подписки', 'подписка']):
-            result['subscriptions'] = parse_number_accurate(item)
-    return result
-
-
 def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     """
     Парсинг основной информации об аккаунте
@@ -296,45 +240,72 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     return account_info
 
 
-accounts_info_list = []
-links_len = len(account_links)
-for idx, account_link in enumerate(account_links):
-    print(f'Парсинг акканута #{idx}...\tВсего аккаунтов: {links_len}')
-    accounts_info = parsing_account_info(driver=driver, account_link=account_link)
-    accounts_info_list.append(accounts_info)
-print(f'Спарсилась информация о {len(accounts_info_list)} аккаунтах.')
-close_driver(driver=driver)
-
-
 #########################
 ##### ЗАПИСЬ ДАННЫХ #####
 #########################
-
-# Запись в json
-with open('data/data.json', 'w') as f:
-    data = json.dump(accounts_info_list, indent=4, ensure_ascii=False, fp=f)
+# # Запись в json
+# with open('data/data.json', 'w') as f:
+#     data = json.dump(accounts_info_list, indent=4, ensure_ascii=False, fp=f)
     
-# Запись в таблицу
-pyxl = PyXLWriter(colors=2)
-# Хедеры
-pyxl[1, 1] = "Ссылка на аккаунт"
-pyxl[1, 2] = "Описание страницы"
-pyxl[1, 3] = "Ссылки из контактов"
-pyxl[1, 4] = "Кол-во постов"
-pyxl[1, 5] = "Кол-во подписчиков"
-pyxl[1, 6] = "Кол-во подписок"
-# Запись данных в таблицу
-for rid, account_item in enumerate(accounts_info_list):
-    r = rid + 2
-    pyxl[r, 1] = account_item.get('account_link')
-    pyxl[r, 2] = account_item.get('all_description')
-    pyxl[r, 3] = "\n------------------------------\n".join(account_item.get('links'))
-    pyxl[r, 4] = str(account_item.get('posts'))
-    pyxl[r, 5] = str(account_item.get('subscribers'))
-    pyxl[r, 6] = str(account_item.get('subscriptions'))
-# Сохраняем файл
-pyxl.save("data/instagram_data.xlsx")
+# # Запись в таблицу
+# pyxl = PyXLWriter(colors=2)
+# # Хедеры
+# pyxl[1, 1] = "Ссылка на аккаунт"
+# pyxl[1, 2] = "Описание страницы"
+# pyxl[1, 3] = "Ссылки из контактов"
+# pyxl[1, 4] = "Кол-во постов"
+# pyxl[1, 5] = "Кол-во подписчиков"
+# pyxl[1, 6] = "Кол-во подписок"
+# # Запись данных в таблицу
+# for rid, account_item in enumerate(accounts_info_list):
+#     r = rid + 2
+#     pyxl[r, 1] = account_item.get('account_link')
+#     pyxl[r, 2] = account_item.get('all_description')
+#     pyxl[r, 3] = "\n------------------------------\n".join(account_item.get('links'))
+#     pyxl[r, 4] = str(account_item.get('posts'))
+#     pyxl[r, 5] = str(account_item.get('subscribers'))
+#     pyxl[r, 6] = str(account_item.get('subscriptions'))
+# # Сохраняем файл
+# pyxl.save("data/instagram_data.xlsx")
 
     
-with open('data/time.txt', 'a') as f:
-    f.write(f'\nКонец обработки: "{datetime.now()}"')
+from database.orm import insert_new_account, async_session
+import asyncio
+
+async def run(post_query: str, max_scrolls: int = 2):
+    with open('data/time.txt', 'a') as f:
+        f.write(f'\n\nКол-во скроллов страницы для поиска постов: "{max_scrolls}"\nНачало обработки: "{datetime.now()}"')
+    # Запуск драйвера
+    driver = start_driver()
+    
+    # Авториация
+    auth(driver=driver, username=config.USERNAME, password=config.PASSWORD)
+    
+    # Парсинг ссылок на посты
+    turn_to_posts_page(driver=driver, query=post_query)
+    post_links = get_post_links(driver, max_scrolls=max_scrolls)
+    post_links = list(post_links)
+    print(f"Найдено {len(post_links)} ссылок на посты")
+    
+    # Парсинг ссылок на аккаунты
+    account_links = set()
+    for post_link in post_links:
+        account_link = accounts_parsing(driver=driver, post_link=post_link)
+        account_links.update(account_link)
+    account_links = list(account_links)
+    print(f"Найдено {len(account_links)} ссылок на аккаунты")
+    
+    # Парсинг страничек
+    for idx, account_link in enumerate(account_links):
+        print(f'Парсинг акканута #{idx}...')
+        account_info = parsing_account_info(driver=driver, account_link=account_link)
+        account_info['hashtag'] = post_query.replace('%23r', '#')
+        insert_new_account(async_session=async_session, data=account_info)
+    print(f'Информация об аккаунтах спарсилась и записалась в БД.')
+    
+    close_driver(driver=driver)
+    with open('data/time.txt', 'a') as f:
+        f.write(f'\nКонец обработки: "{datetime.now()}"')
+    
+    
+asyncio.run(run(post_query='%23upcomingrapper', max_scrolls=1))  # '%23r' == '#'
