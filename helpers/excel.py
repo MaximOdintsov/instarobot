@@ -67,7 +67,7 @@ class PyXLWriter:
             cell.alignment = Alignment(horizontal='left', vertical='center')
             
     def __setitem__(self, pos, value):
-        self.set_cell(pos, value)
+        self.set_cell(pos, str(value))
 
     def save(self, path):
         self.ws.calculate_dimension()

@@ -6,27 +6,37 @@ from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
+
 class AccountType(enum.Enum):
-    Artist = "Artist"
-    Market = "Market"
-    Beatmaker = "Beatmaker"
-    Other = "Other"
+    ARTIST = "ARTIST"
+    BEATMAKER = "BEATMAKER"
+    LABEL = "LABEL"
+    MARKET = "MARKET"
+    COMMUNITY = "COMMUNITY"
+    OTHER = "OTHER"
+
 
 class Account(Base):
     __tablename__ = 'accounts'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     create_datetime = Column(DateTime, default=datetime.datetime.now)
-    links = Column(JSON, default=[])
+    
     link = Column(String, unique=True, nullable=False)
-    all_description = Column(String, nullable=True)
-    posts = Column(Integer, default=0)
-    subscribers = Column(Integer, default=0)
-    subscriptions = Column(Integer, default=0)
-    last_post_datetime = Column(DateTime, nullable=True)
-    hashtag = Column(String, nullable=True)
-    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.Other)
+    is_send = Column(Boolean, default=False)  # Записан ли экземпляр в таблицу
     data = Column(JSON, default=dict)
-    is_send = Column(Boolean, default=False)
+    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.OTHER)
+    
+    # post - связанный объект Post
+    # 
+    
+    
+    # links = Column(JSON, default=[])
+    # all_description = Column(String, nullable=True)
+    # posts = Column(Integer, default=0)
+    # subscribers = Column(Integer, default=0)
+    # subscriptions = Column(Integer, default=0)
+    # last_post_datetime = Column(DateTime, nullable=True)
+    # hashtag = Column(String, nullable=True)
     
     
