@@ -1,6 +1,7 @@
 import time
 import json
 import asyncio
+from pathlib import Path
 from typing import List
 from datetime import datetime
 
@@ -8,10 +9,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 from helpers.selenium_management import start_driver, open_link, get_wait_element, get_wait_elements, close_driver, get_links
-from helpers.utils import extract_original_link, parse_activity_data
+from helpers.utils import extract_original_link, parse_activity_data, extract_emails
 from helpers.excel import PyXLWriter
 
-from database.orm import async_engine, async_session, insert_new_account, create_tables, get_all_accounts, get_accounts_not_send, mark_accounts_as_sent
+from database.orm import async_engine, async_session, insert_account, create_tables, get_all_accounts, get_accounts_not_send, mark_account_as_sent
 from database.models import Account
 
 import config
@@ -169,7 +170,7 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     time.sleep(3)
     
     links = set()
-    all_description = None
+    description = None
     activity_attrs = {}
     
     #################################
@@ -183,6 +184,18 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
         attempts=1,
         is_error=False
     )
+    desctiption_span_elements = get_wait_elements(  # Элементы span из описания аккаунта\n",
+        driver=account_description_parent_element,
+        by=By.TAG_NAME,
+        searched_elem='span',
+        delay=3,
+        attempts=1,
+        is_error=False
+    )
+    for desctiption_span_element in desctiption_span_elements:  # Нажимаем на кнопку \"ещё\" (раскраываем описание полностью)\n",
+        if 'ещё' == desctiption_span_element.text:
+            desctiption_span_element.click()
+
     if account_description_parent_element:
         # Парсинг описания аккаунта
         description = account_description_parent_element.text
@@ -254,84 +267,79 @@ def write_excel(accounts: List[Account], out_path: str = 'data/instagram_data.xl
     # Хедеры
     pyxl[1, 1] = "Ссылка на аккаунт"
     pyxl[1, 2] = "Описание страницы"
-    pyxl[1, 3] = "Ссылки из контактов"
-    pyxl[1, 4] = "Кол-во постов"
-    pyxl[1, 5] = "Кол-во подписчиков"
-    pyxl[1, 6] = "Кол-во подписок"
-    pyxl[1, 7] = "Дата сохранения"
-    pyxl[1, 8] = "Предсказанный тип аккаунта"
-    pyxl[1, 9] = "Комментарий верификатора"
-    pyxl[1, 10] = "Тип аккаунта (записывается всегда). Возможные значения: ARTIST, BEATMAKER, LABEL, MARKET, COMMUNITY, OTHER"
+    pyxl[1, 3] = "Найденная почта"
+    pyxl[1, 4] = "Ссылки из контактов"
+    pyxl[1, 5] = "Кол-во постов"
+    pyxl[1, 6] = "Кол-во подписчиков"
+    pyxl[1, 7] = "Кол-во подписок"
+    pyxl[1, 8] = "Хэштег, по которому найден аккаунт"
+    pyxl[1, 9] = "Дата сохранения"
+    pyxl[1, 10] = "Предсказанный тип аккаунта"
+    pyxl[1, 11] = "Комментарий верификатора"
+    pyxl[1, 12] = "Тип аккаунта (записывается всегда). Возможные значения: ARTIST, BEATMAKER, LABEL, MARKET, COMMUNITY, OTHER"
 
     # Данные
     for rid, account in enumerate(accounts):
         r = rid + 2
         pyxl[r, 1] = account.link
         pyxl[r, 2] = account.data.get('description', '')
-        pyxl[r, 3] = "\n\n".join(account.data.get('links', []))
-        pyxl[r, 4] = account.data.get('posts', '')
-        pyxl[r, 5] = account.data.get('subscribers', '')
-        pyxl[r, 6] = account.data.get('subscriptions', '')
-        pyxl[r, 7] = account.create_datetime
-        pyxl[r, 8] = account.account_type.value
-        pyxl[r, 9] = ''
-        pyxl[r, 10] = ''
+        pyxl[r, 3] = "\n".join(account.data.get('emails', []))
+        pyxl[r, 4] = "\n\n".join(account.data.get('links', []))
+        pyxl[r, 5] = account.data.get('posts', '')
+        pyxl[r, 6] = account.data.get('subscribers', '')
+        pyxl[r, 7] = account.data.get('subscriptions', '')
+        pyxl[r, 8] = account.data.get('hashtag', '')
+        pyxl[r, 9] = account.create_datetime
+        pyxl[r, 10] = account.account_type.value
+        pyxl[r, 11] = ''
+        pyxl[r, 12] = ''
         
     # Сохраняем файл
     pyxl.save(out_path)
 
 
 async def run(post_query: str, max_scrolls: int = 2):
-    from pathlib import Path
-    time_path = Path('data/time.txt')
-    # time_path.write_text(f'\n\nКол-во скроллов страницы для поиска постов: "{max_scrolls}"\nНачало обработки: "{datetime.now()}"')
-        
-    # # Запуск драйвера
-    # driver = start_driver()
+    datetime_start = datetime.now()
+     
+    # Запуск драйвера
+    driver = start_driver()
     
-    # # Авториация
-    # auth(driver=driver, username=config.USERNAME, password=config.PASSWORD)
+    # Авториация
+    auth(driver=driver, username=config.USERNAME, password=config.PASSWORD)
     
-    # # Парсинг ссылок на посты
-    # turn_to_posts_page(driver=driver, query=post_query)
-    # post_links = get_post_links(driver, max_scrolls=max_scrolls)
-    # post_links = list(post_links)
-    # print(f"Найдено {len(post_links)} ссылок на посты")
+    # Парсинг ссылок на посты
+    turn_to_posts_page(driver=driver, query=post_query)
+    post_links = get_post_links(driver, max_scrolls=max_scrolls)
+    post_links = list(post_links)
+    print(f"Найдено {len(post_links)} ссылок на посты")
     
-    # # Парсинг ссылок на аккаунты
-    # account_links = set()  # Вместо set - записать в БД и проверять
-    # post_links = post_links[:3]
-    # for post_link in post_links:
-    #     account_link = accounts_parsing(driver=driver, post_link=post_link)
-    #     account_links.update(account_link)
-    # account_links = list(account_links)  
-    # print(f"Найдено {len(account_links)} ссылок на аккаунты")
-    
+    # Парсинг ссылок на аккаунты
+    for post_link in post_links:
+        account_links = accounts_parsing(driver=driver, post_link=post_link)
+        for account_link in account_links:
+            await insert_account(async_session=async_session, account_link=account_link)
+
     # # Парсинг страничек
-    # account_links = account_links[:5]  # Брать из БД
-    # for idx, account_link in enumerate(account_links):
-    #     print(f'Парсинг акканута #{idx}...')
-    #     account_data = parsing_account_info(driver=driver, account_link=account_link)
-    #     account_data['hashtag'] = post_query.replace('%23r', '#')
+    accounts = await get_accounts_not_send(async_session)
+    for idx, account in enumerate(accounts):
+        print(f'Парсинг акканута #{idx}...')
+        account_data = parsing_account_info(driver=driver, account_link=account.link)
+        account_data['hashtag'] = post_query.replace('%23', '#')
+        account_data['emails'] = extract_emails(account_data.get('description', ''))
         
-    #     await insert_new_account(
-    #         async_session=async_session, 
-    #         account_link=account_link,
-    #         account_data=account_data
-    #     )
-        
-    # print(f'Информация об аккаунтах спарсилась и записалась в БД.')
+        await insert_account(async_session=async_session, account_link=account.link, account_data=account_data)
+    print(f'Информация об аккаунтах спарсилась и записалась в БД.')
+    close_driver(driver=driver)
     
-    # close_driver(driver=driver)
+    # Запись времени обработки
+    datetime_end = datetime.now()
+    time_path = Path('data/time.txt')
+    time_path.write_text(f'\n\nКол-во скроллов страницы: "{max_scrolls}"\nНачало обработки: "{datetime_start}"\nКонец обработки: "{datetime_end}"')
     
     # Запись данных в таблицу
-    # accounts = await get_accounts_not_send(async_session)
-    accounts = await get_all_accounts(async_session)
     write_excel(accounts=accounts, out_path='data/instagram_data.xlsx')
-    await mark_accounts_as_sent(async_session, accounts)
-    
-    time_path.write_text(f'\nКонец обработки: "{datetime.now()}"')
-    
+    for account in accounts:
+        await mark_account_as_sent(async_session, account)
     
     
 async def main():

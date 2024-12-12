@@ -49,3 +49,14 @@ def parse_activity_data(data_list: list) -> dict:
         elif any(word in item for word in ['подписок', 'подписки', 'подписка']):
             result['subscriptions'] = parse_number_accurate(item)
     return result
+
+
+def extract_emails(text: str) -> list:
+    """
+    Извлекает email-адреса из текста.
+
+    :param text: Строка, содержащая текст для анализа.
+    :return: Список найденных email-адресов.
+    """
+    email_pattern = r'[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}'
+    return re.findall(email_pattern, text)

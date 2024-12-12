@@ -13,29 +13,29 @@ async def create_tables(async_engine: create_async_engine):
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-async def insert_new_account(async_session: sessionmaker, account_link: str, account_data: dict):
+
+
+
+
+async def insert_account(async_session: sessionmaker, account_link: str, account_data: dict = {}):
     async with async_session() as session:
         # Проверяем, существует ли запись с таким account_link
         result = await session.execute(
             select(Account).where(Account.link == account_link)
         )
-        existing_account = result.scalar_one_or_none()
+        account = result.scalar_one_or_none()
 
-        if not existing_account:  # Если аккаунта не существует, создаём новый объект
+        if account and account_data:  # Если аккаунт существует и есть данные, то обновляем объект
+            account.data = account_data
+            session.add(account)
+        elif not account:  # Если аккаунта не существует, создаём новый объект
             new_account = Account(
                 link=account_link,
                 data=account_data
-                
-                # all_description=data.get('all_description', None),
-                # links=data.get('links', []),
-                # posts=data.get('posts', 0),
-                # subscribers=data.get('subscribers', 0),
-                # subscriptions=data.get('subscriptions', 0),
-                # account_type=AccountType.Other,
-                # hashtag=data.get('hashtag', None)
             )
             session.add(new_account)
-            await session.commit()  # После добавления всех новых объектов — коммитим
+            
+        await session.commit()  # После добавления всех новых объектов — коммитим
         
 
 async def get_all_accounts(async_session: sessionmaker):
@@ -57,14 +57,13 @@ async def get_accounts_not_send(async_session: sessionmaker):
         return all_accounts.scalars().all()
     
 
-async def mark_accounts_as_sent(async_session: sessionmaker, accounts: Account):
+async def mark_account_as_sent(async_session: sessionmaker, account: Account):
     """
     Обновить поле is_send для accounts
     """
     async with async_session() as session:
-        for account in accounts:
-            account.is_send = True
-            session.add(account)  # Добавление изменённого объекта в сессию
+        account.is_send = True
+        session.add(account)  # Добавление изменённого объекта в сессию
         
         # Фиксация изменений в базе данных
         await session.commit()
