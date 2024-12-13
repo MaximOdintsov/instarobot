@@ -24,6 +24,7 @@ class Account(Base):
     
     link = Column(String, unique=True, nullable=False)
     is_send = Column(Boolean, default=False)  # Записан ли экземпляр в таблицу
+    is_processed = Column(Boolean, default=False)  # Обработан ли экземпляр
     data = Column(JSON, default=dict)
     account_type = Column(Enum(AccountType), nullable=False, default=AccountType.OTHER)
     
