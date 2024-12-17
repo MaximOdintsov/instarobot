@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 
 from helpers.selenium_management import start_driver, open_link, get_wait_element, get_wait_elements, close_driver, get_links
 from helpers.utils import extract_original_link, parse_activity_data, extract_emails
+from helpers.utils import POST_VALUE, ACCOUNT_VALUE, INVALID_VALUE, validate_instagram_url
 from helpers.excel import PyXLWriter
 
 from database.orm import (async_engine, async_session, insert_account, create_tables, get_all_accounts,
@@ -62,7 +63,17 @@ def turn_to_posts_page(driver: webdriver, query: str):
     """
     link = f'https://www.instagram.com/explore/search/keyword/?q={query}'
     open_link(driver=driver, link=link)
-    
+    nothing_found_element = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div/div[2]/span',
+        delay=3,
+        is_error=False
+    )
+    if nothing_found_element and 'не найдено' in nothing_found_element.text.lower():
+        return False
+    return True
+
 
 def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10) -> set:
     """
@@ -94,7 +105,7 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
 ##################################
 ### Парсинг ссылок на аккаунты ###
 ##################################
-def accounts_parsing(driver: webdriver, post_link: str) -> list:
+def accounts_parsing(driver: webdriver, post_link: str) -> set:
     """
     Функция для парсинга аккаунтов из поста
     """
@@ -156,9 +167,9 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
     
     # Поиск ссылок на аккаунты из родительского элемента
     if find_links is True:
-        account_link = get_links(accounts_parent)
-        print(f'Найдены ссылки: {account_link}')
-        return account_link
+        account_links = get_links(accounts_parent)
+        print(f'Найдены ссылки: {account_links}')
+        return account_links
     
 
 ######################################
@@ -304,13 +315,20 @@ def write_excel(accounts: List[Account], out_path: str = 'data/instagram_data.xl
     pyxl.save(out_path)
 
 
-async def run(driver: webdriver, post_query: str, max_scrolls: int = 2):
+async def run_robot(driver: webdriver, post_query: str, max_scrolls: int = 2):
     datetime_start = datetime.now()
 
     # Парсинг ссылок на посты
-    turn_to_posts_page(driver=driver, query=post_query)
+    posts_found = turn_to_posts_page(driver=driver, query=post_query)
+    if not posts_found:
+        return
+
     post_links = get_post_links(driver, max_scrolls=max_scrolls)
     post_links = list(post_links)
+    for post_link in post_links:
+        link_type = validate_instagram_url(post_link)
+        if link_type != POST_VALUE:
+            post_links.remove(post_link)
     print(f"Найдено {len(post_links)} ссылок на посты")
 
     # Парсинг ссылок на аккаунты
@@ -318,12 +336,15 @@ async def run(driver: webdriver, post_query: str, max_scrolls: int = 2):
         print(f'Парсинг поста #{idx}. Ссылка: {post_link}')
         account_links = accounts_parsing(driver=driver, post_link=post_link)
         for account_link in account_links:
-            await insert_account(async_session=async_session, account_link=account_link)
+            link_type = validate_instagram_url(account_link)
+            if link_type == ACCOUNT_VALUE:
+                await insert_account(async_session=async_session, account_link=account_link)
 
     # Парсинг страничек
     accounts = await get_accounts_not_processed(async_session)
+    accounts_len = len(accounts)
     for idx, account in enumerate(accounts):
-        print(f'Парсинг акканута #{idx}. Ссылка: {account.link}')
+        print(f'Парсинг акканута #{idx}. Ссылка: {account.link}. Всего аккаунтов для обработки: {accounts_len}')
         account_data = parsing_account_info(driver=driver, account_link=account.link)
         account_data['hashtag'] = post_query.replace('%23', '#')
         account_data['emails'] = extract_emails(account_data.get('description', ''))
@@ -351,18 +372,42 @@ async def main():
     auth(driver=driver, username=config.USERNAME, password=config.PASSWORD)
 
     queries = [
-        'captian6ERS',
-        'FREE4X',
-        'SORRY4THEWAIT',
-        'HeadToMyToes',
-        'federalnightmare',
-        'trickortreat',
-        'RMG',
-        'HumildadYRespeto',
-        'Chuligang'
+        'mobmusicwillneverdie',
+        'applemusicplaylist',
+        'explorepage',
+        'hiphopartist',
+        'bayarea',
+        'bayareaartist',
+        'qmceop',
+        'asylumrecords',
+        'gogettasonly',
+        'mob',
+        'cmgheavycamp',
+        'cmgthelabel',
+        'empire',
+        'motown',
+        'rapperlife',
+        'rappersbelike',
+        'opps',
+        'hiphopblood',
+        'alliswell',
+        'rapfor',
+        'letsgetit',
+        'TurnYoTrapUP',
+        'NORAPCAP',
+        'Truestory',
+        'longlivemybruddas',
+        'Lose',
+        'freestyle',
+        'freeverse',
+        'freeversepoetry',
+        'barz',
+        'bars',
+        'bakersfield',
+        'losangeles',
     ]
     for query in queries:
-        await run(driver=driver, post_query=f'%23{query}', max_scrolls=1)  # '%23' == '#'
+        await run_robot(driver=driver, post_query=f'%23{query}', max_scrolls=1)  # '%23' == '#'
     close_driver(driver=driver)
 
     # Запись данных в таблицу

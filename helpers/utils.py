@@ -5,12 +5,11 @@ from urllib.parse import urlparse, parse_qs
 def extract_original_link(raw_link):
     """
     Функция извлекает оригинальную ссылку
-    """    
+    """
     parsed_url = urlparse(raw_link)
     query_params = parse_qs(parsed_url.query)
     orig_link = query_params.get("u", [""])[0]
     if orig_link:
-        
         return query_params.get("u", [""])[0]
     return raw_link
 
@@ -19,6 +18,7 @@ def parse_activity_data(data_list: list) -> dict:
     """
     Функция распределения списка основной информации об аккаунте
     """
+
     def parse_number_accurate(text: str) -> int:
         """
         Функция для преобразования текста в числовой формат
@@ -38,7 +38,6 @@ def parse_activity_data(data_list: list) -> dict:
             clean_number = number[0].replace(' ', '').replace(',', '.')
             return int(float(clean_number) * multiplier)
         return 0
-    
 
     result = {'posts': 0, 'subscribers': 0, 'subscriptions': 0}
     for item in data_list:
@@ -60,3 +59,23 @@ def extract_emails(text: str) -> list:
     """
     email_pattern = r'[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}'
     return re.findall(email_pattern, text)
+
+
+POST_VALUE = 1
+ACCOUNT_VALUE = 2
+INVALID_VALUE = 9
+
+
+def validate_instagram_url(url: str) -> int:
+    """
+    Проверяет, является ли ссылка ссылкой на пост или на аккаунт в Instagram.
+    """
+    post_pattern = re.compile(r"^https://www\.instagram\.com/p/[\w\-]+/$")
+    account_pattern = re.compile(r"^https://www\.instagram\.com/[\w\.]+/$")
+
+    if post_pattern.match(url):
+        return POST_VALUE
+    elif account_pattern.match(url):
+        return ACCOUNT_VALUE
+    else:
+        return INVALID_VALUE
