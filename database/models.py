@@ -21,6 +21,7 @@ class Account(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     create_datetime = Column(DateTime, default=datetime.datetime.now)
+    # modify_datetime =
     
     link = Column(String, unique=True, nullable=False)
     is_send = Column(Boolean, default=False)  # Записан ли экземпляр в таблицу

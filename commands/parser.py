@@ -74,9 +74,8 @@ async def main():
 
     # Парсинг запросов
     with open(config.QUERIES_PATH, "r", encoding="utf-8") as file:
-        content = file.read()
-        queries = [q.strip() for q in content.split("---;") if q.strip()]
-
+        queries = json.load(file)
+    
     # Запуск парсера
     for query in queries:
         await parsing(driver=driver, post_query=f'%23{query}', max_scrolls=1)  # '%23' == '#'

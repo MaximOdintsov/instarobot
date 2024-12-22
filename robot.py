@@ -1,24 +1,17 @@
 import random
 import time
-import json
-import asyncio
-from pathlib import Path
-from typing import List
-from datetime import datetime
+
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
-from helpers.selenium_management import start_driver, open_link, get_wait_element, get_wait_elements, close_driver, get_links
-from helpers.utils import extract_original_link, parse_activity_data, extract_emails
-from helpers.utils import POST_VALUE, ACCOUNT_VALUE, INVALID_VALUE, validate_instagram_url
-from helpers.excel import PyXLWriter
 
-from database.orm import (async_engine, async_session, insert_account, create_tables, get_all_accounts,
-                          get_accounts_not_processed, get_accounts_not_send, mark_account_as_sent)
-from database.models import Account
+from helpers.selenium_management import open_link, get_wait_element, get_wait_elements, get_links
+from helpers.utils import extract_original_link, parse_activity_data
 
-import config
+
 
 
 ###################
@@ -49,8 +42,9 @@ def auth(driver: webdriver, username: str, password: str):
         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div/div[3]/button/div',
         delay=5,
     )
-    enter_element.click()
-    time.sleep(random.randrange(5, 7))
+    enter_element.click() 
+    time.sleep(random.randrange(3, 5))
+    
     return True
 
 
@@ -273,3 +267,64 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
                     'links_description': list(links_description)} | activity_attrs
     return account_info
 
+
+#########################################################
+### Подписка и отправка рандомного сообщения аккаунту ###
+#########################################################
+def send_message_and_follow(driver: webdriver, account_link: str, message: str):
+    open_link(driver=driver, link=account_link)
+    time.sleep(2)
+
+    # Подписка + сообщение
+    follow_button = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem=".//div[contains(text(), 'Подписаться')]",
+        delay=2,
+        attempts=2,
+        is_error=False
+    )
+    send_message_button = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem=".//div[@role='button' and contains(text(), 'Отправить сообщение')]",
+        delay=2,
+        attempts=2,
+        is_error=False
+    )
+    print(follow_button.text)
+
+    # Нажать "Подписаться"
+    if follow_button:
+        follow_button.click()
+        time.sleep(1)
+
+    # Нажать "Отправить сообщение"
+    if send_message_button:
+        send_message_button.click()
+        notification_button = get_wait_element(  # Модальное окно "Включить уведомления?"
+            driver=driver,
+            by=By.XPATH,
+            searched_elem="//button[text()='Не сейчас']",
+            delay=3,
+            logs=False,
+            is_error=False,
+            attempts=1
+        )
+        if notification_button:
+            notification_button.click()
+
+    # Отправить рандомный шаблон сообщения
+    if send_message_button:
+        send_message_field_element = get_wait_element(
+            driver=driver,
+            by=By.XPATH,
+            searched_elem=".//div[@role='textbox' and @aria-describedby='Сообщение' and @aria-placeholder='Напишите сообщение…']",
+            delay=2,
+            attempts=2,
+            is_error=False
+        )
+        if send_message_field_element:
+            send_message_field_element.clear()
+            ActionChains(driver).move_to_element(send_message_field_element).click().send_keys(message).perform()
+            send_message_field_element.send_keys(Keys.ENTER)

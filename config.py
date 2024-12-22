@@ -5,7 +5,7 @@ DATABASE_URL = F"sqlite+aiosqlite:///{DB_PATH}"
 
 
 # PATHS
-QUERIES_PATH = 'data/incoming_data/queries.txt'
+QUERIES_PATH = 'data/incoming_data/queries.json'
 AUTH_DATA_PATH = 'data/incoming_data/auth_path.json'
-MESSAGE_TEMPLATES_PATH = 'data/incoming_data/message_templates.txt'
+MESSAGE_TEMPLATES_PATH = 'data/incoming_data/message_templates.json'
 INSTA_ACCOUNTS_DATA_PATH = 'data/out/insta_accounts.xlsx'

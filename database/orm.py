@@ -94,6 +94,7 @@ async_session = sessionmaker(
     expire_on_commit=False
 )
 
-# asyncio.run(create_tables(async_engine=async_engine)
+# asyncio.run(create_tables(async_engine=async_engine))
 # await insert_new_account(async_session=async_session, data=account_info)
 # await get_all_accounts(async_session=async_session)
+# await create_tables(async_engine=async_engine)
