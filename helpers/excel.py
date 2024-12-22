@@ -75,3 +75,48 @@ class PyXLWriter:
         self.add_borders()
         
         self.wb.save(path)
+
+
+def write_excel(accounts: list, out_path: str):
+    """
+    Запись данных из БД в excel таблицу
+
+    :param accounts: список объектов модели Account
+    :param out_path: путь сохранения excel файла
+    """
+    pyxl = PyXLWriter(colors=2)
+
+    # Хедеры
+    pyxl[1, 1] = "Ссылка на аккаунт"
+    pyxl[1, 2] = "Описание страницы"
+    pyxl[1, 3] = "Найденная почта"
+    pyxl[1, 4] = "Ссылки из описания"  # new
+    pyxl[1, 5] = "Ссылки из контактов"
+    pyxl[1, 6] = "Кол-во постов"
+    pyxl[1, 7] = "Кол-во подписчиков"
+    pyxl[1, 8] = "Кол-во подписок"
+    pyxl[1, 9] = "Хэштег, по которому найден аккаунт"
+    pyxl[1, 10] = "Дата сохранения"
+    pyxl[1, 11] = "Предсказанный тип аккаунта"
+    pyxl[1, 12] = "Комментарий верификатора"
+    pyxl[1, 13] = "Тип аккаунта (записывается всегда). Значения: ARTIST, BEATMAKER, LABEL, MARKET, COMMUNITY, OTHER"
+
+    # Данные
+    for rid, account in enumerate(accounts):
+        r = rid + 2
+        pyxl[r, 1] = account.link
+        pyxl[r, 2] = account.data.get('description', '')
+        pyxl[r, 3] = "\n".join(account.data.get('emails', []))
+        pyxl[r, 4] = "\n\n".join(account.data.get('links_description', []))  # new
+        pyxl[r, 5] = "\n\n".join(account.data.get('links_contacts', []))
+        pyxl[r, 6] = account.data.get('posts', '')
+        pyxl[r, 7] = account.data.get('subscribers', '')
+        pyxl[r, 8] = account.data.get('subscriptions', '')
+        pyxl[r, 9] = account.data.get('hashtag', '')
+        pyxl[r, 10] = account.create_datetime
+        pyxl[r, 11] = account.account_type.value
+        pyxl[r, 12] = ''
+        pyxl[r, 13] = ''
+
+    # Сохраняем файл
+    pyxl.save(out_path)
