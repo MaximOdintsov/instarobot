@@ -56,7 +56,7 @@ async def get_accounts_not_send(async_session: sessionmaker):
     """
     async with async_session() as session:
         all_accounts = await session.execute(
-            select(Account).where(Account.is_send == False)
+            select(Account).where(Account.is_send == False, Account.is_processed == True)
         )
         return all_accounts.scalars().all()
 

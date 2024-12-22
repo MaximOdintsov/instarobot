@@ -170,6 +170,7 @@ def accounts_parsing(driver: webdriver, post_link: str) -> set:
         account_links = get_links(accounts_parent)
         print(f'Найдены ссылки: {account_links}')
         return account_links
+    return []
     
 
 ######################################
@@ -365,50 +366,48 @@ async def run_robot(driver: webdriver, post_query: str, max_scrolls: int = 2):
 async def main():
     await create_tables(async_engine=async_engine)
 
-    # Запуск драйвера
-    driver = start_driver()
-
-    # Авториация
-    auth(driver=driver, username=config.USERNAME, password=config.PASSWORD)
-
-    queries = [
-        'mobmusicwillneverdie',
-        'applemusicplaylist',
-        'explorepage',
-        'hiphopartist',
-        'bayarea',
-        'bayareaartist',
-        'qmceop',
-        'asylumrecords',
-        'gogettasonly',
-        'mob',
-        'cmgheavycamp',
-        'cmgthelabel',
-        'empire',
-        'motown',
-        'rapperlife',
-        'rappersbelike',
-        'opps',
-        'hiphopblood',
-        'alliswell',
-        'rapfor',
-        'letsgetit',
-        'TurnYoTrapUP',
-        'NORAPCAP',
-        'Truestory',
-        'longlivemybruddas',
-        'Lose',
-        'freestyle',
-        'freeverse',
-        'freeversepoetry',
-        'barz',
-        'bars',
-        'bakersfield',
-        'losangeles',
-    ]
-    for query in queries:
-        await run_robot(driver=driver, post_query=f'%23{query}', max_scrolls=1)  # '%23' == '#'
-    close_driver(driver=driver)
+    # # Запуск драйвера
+    # driver = start_driver()
+    #
+    # # Авториация
+    # auth(driver=driver, username=config.USERNAME, password=config.PASSWORD)
+    #
+    # queries = [
+    #     'explorepage',
+    #     # 'hiphopartist',
+    #     # 'bayarea',
+    #     # 'bayareaartist',
+    #     # 'qmceop',
+    #     # 'asylumrecords',
+    #     # 'gogettasonly',
+    #     # 'mob',
+    #     # 'cmgheavycamp',
+    #     # 'cmgthelabel',
+    #     # 'empire',
+    #     # 'motown',
+    #     # 'rapperlife',
+    #     # 'rappersbelike',
+    #     # 'opps',
+    #     # 'hiphopblood',
+    #     # 'alliswell',
+    #     # 'rapfor',
+    #     # 'letsgetit',
+    #     # 'TurnYoTrapUP',
+    #     # 'NORAPCAP',
+    #     # 'Truestory',
+    #     # 'longlivemybruddas',
+    #     # 'Lose',
+    #     # 'freestyle',
+    #     # 'freeverse',
+    #     # 'freeversepoetry',
+    #     # 'barz',
+    #     # 'bars',
+    #     # 'bakersfield',
+    #     # 'losangeles',
+    # ]
+    # for query in queries:
+    #     await run_robot(driver=driver, post_query=f'%23{query}', max_scrolls=1)  # '%23' == '#'
+    # close_driver(driver=driver)
 
     # Запись данных в таблицу
     accounts = await get_accounts_not_send(async_session)
