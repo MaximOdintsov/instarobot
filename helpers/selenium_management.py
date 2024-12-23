@@ -1,4 +1,5 @@
 import time
+import requests
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -26,6 +27,13 @@ def start_driver(attempts: int = 3, options: webdriver.ChromeOptions = None, log
 def open_link(driver: webdriver, link, attempts: int = 3, logs: bool = True) -> bool:
     for attempt in range(attempts):
         try:
+            response = requests.get(link, timeout=10)
+            if 400 <= response.status_code < 600:
+                print(f"Ошибка HTTP-кода: {response.status_code}. Страница недоступна.")
+                return False
+            else:
+                print(f"HTTP-код {response.status_code}. Страница доступна.")
+
             driver.get(link)
             return True
         except Exception as e:
@@ -34,6 +42,46 @@ def open_link(driver: webdriver, link, attempts: int = 3, logs: bool = True) -> 
             time.sleep(5)
     else:
         raise Exception(f'Ссылка "{link}" недоступна или не найдена.')
+
+
+def check_page_opening(url, driver=None):
+    """
+    Проверяет, что страница открылась корректно, используя HTTP-запрос для проверки статуса.
+
+    :param url: str, URL страницы.
+    :param driver: selenium.webdriver, опционально переданный экземпляр WebDriver.
+    :return: bool, True, если страница открыта корректно, иначе False.
+    """
+    try:
+        # Проверяем HTTP-статус страницы
+        response = requests.get(url, timeout=10)
+        if 400 <= response.status_code < 600:
+            print(f"Ошибка HTTP-кода: {response.status_code}. Страница недоступна.")
+            return False
+        else:
+            print(f"HTTP-код {response.status_code}. Страница доступна.")
+
+        # Если драйвер не передан, создаём новый
+        if driver is None:
+            driver = webdriver.Chrome()
+
+        # Открываем страницу с помощью Selenium
+        driver.get(url)
+
+        # Дополнительная проверка: проверяем, совпадает ли URL после редиректа
+        if driver.current_url != url:
+            print(f"Внимание: редирект на {driver.current_url}.")
+        else:
+            print("URL совпадает, страница открыта корректно.")
+
+        return True
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка HTTP-запроса: {e}")
+        return False
+    except WebDriverException as e:
+        print(f"Ошибка Selenium: {e}")
+        return False
+
 
 
 def get_wait_element(driver: webdriver, by: By, searched_elem: str, delay: int = 30, attempts: int = 3,
