@@ -292,12 +292,12 @@ def send_message_and_follow(driver: webdriver, account_link: str, message: str):
         attempts=2,
         is_error=False
     )
-    print(follow_button.text)
 
     # Нажать "Подписаться"
     if follow_button:
         follow_button.click()
-        time.sleep(1)
+        time.sleep(random.randrange(1, 3))
+        print(f'Подписался на аккаунт')
 
     # Нажать "Отправить сообщение"
     if send_message_button:
@@ -313,6 +313,7 @@ def send_message_and_follow(driver: webdriver, account_link: str, message: str):
         )
         if notification_button:
             notification_button.click()
+            print(f'Перешел в директ')
 
     # Отправить рандомный шаблон сообщения
     if send_message_button:
@@ -327,4 +328,7 @@ def send_message_and_follow(driver: webdriver, account_link: str, message: str):
         if send_message_field_element:
             send_message_field_element.clear()
             ActionChains(driver).move_to_element(send_message_field_element).click().send_keys(message).perform()
+            time.sleep(random.randrange(1, 4))
             send_message_field_element.send_keys(Keys.ENTER)
+            time.sleep(random.randrange(2, 4))
+            print(f'Отправил сообщение')
