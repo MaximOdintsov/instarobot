@@ -69,10 +69,22 @@ INVALID_VALUE = 9
 def validate_instagram_url(url: str) -> int:
     """
     Проверяет, является ли ссылка ссылкой на пост или на аккаунт в Instagram.
+    
+    Args:
+        url (str): Ссылка для проверки
+    
+    Returns:
+        int: POST_VALUE если это ссылка на пост,
+             ACCOUNT_VALUE если это ссылка на аккаунт,
+             INVALID_VALUE в противном случае
     """
-    post_pattern = re.compile(r"^https://www\.instagram\.com/p/[\w\-]+/$")
-    account_pattern = re.compile(r"^https://www\.instagram\.com/[\w\.]+/$")
-
+    post_pattern = re.compile(
+        r"^https?:\/\/(?:www\.)?instagram\.com\/p\/[\w\-]+(?:\/)?$"
+    )
+    account_pattern = re.compile(
+        r"^https?:\/\/(?:www\.)?instagram\.com\/[\w\.]+(?:\/)?$"
+    )
+    
     if post_pattern.match(url):
         return POST_VALUE
     elif account_pattern.match(url):

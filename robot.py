@@ -43,7 +43,7 @@ def auth(driver: webdriver, username: str, password: str):
         delay=5,
     )
     enter_element.click() 
-    time.sleep(random.randrange(3, 5))
+    time.sleep(random.randrange(10, 13))
     
     return True
 

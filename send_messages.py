@@ -15,7 +15,8 @@ def main(message_num):
 
     # Список ссылок на аккаунты
     with open(config.ACCOUNT_LINKS_PATH, "r", encoding="utf-8") as file:
-        accounts = json.load(file)
+        accounts = file.read()
+        accounts = accounts.split('\n')
 
     # Список шаблонов сообщений
     with open(config.MESSAGE_TEMPLATES_PATH, "r", encoding="utf-8") as file:

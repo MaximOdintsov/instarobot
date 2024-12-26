@@ -11,4 +11,4 @@ QUERIES_PATH = 'data/incoming_data/queries.json'
 INSTA_ACCOUNTS_DATA_PATH = 'data/out/insta_accounts.xlsx'
 # for send_messages
 MESSAGE_TEMPLATES_PATH = 'data/incoming_data/message_templates.json'
-ACCOUNT_LINKS_PATH = 'data/incoming_data/account_links.json'
+ACCOUNT_LINKS_PATH = 'data/incoming_data/account_links.txt'
