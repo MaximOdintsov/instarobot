@@ -136,12 +136,8 @@ def close_driver(driver: webdriver, logs: bool = True):
         if logs:
             print(f'Ошибка при закрытии драйвера: "{e}"')
         
-        
-def get_links(parent_element: webdriver) -> set:
-    """
-    Поиск ссылок в дочерних элементах из родительского элемента
-    """
-    # link_elements = parent_element.find_elements(By.TAG_NAME, 'a')
+
+def get_link_elements(parent_element: webdriver) -> List[webdriver.remote.webelement.WebElement]:
     link_elements = get_wait_elements(
         driver=parent_element, 
         by=By.TAG_NAME, 
@@ -150,11 +146,18 @@ def get_links(parent_element: webdriver) -> set:
         attempts=1,
         is_error=False
     )
+    return link_elements
+
+
+def get_links(link_elements: List[webdriver.remote.webelement.WebElement]) -> list:
+    """
+    Поиск ссылок в дочерних элементах из родительского элемента
+    """
     
     # Сбор и вывод всех ссылок
-    link_list = []
+    link_list = set()
     for link_element in link_elements:
         href = link_element.get_attribute("href")
         if href:
-            link_list.append(href)
-    return link_list
+            link_list.add(href)
+    return list(link_list)

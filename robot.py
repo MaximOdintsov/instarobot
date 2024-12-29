@@ -8,7 +8,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 
-from helpers.selenium_management import open_link, get_wait_element, get_wait_elements, get_links
+from helpers.selenium_management import open_link, get_wait_element, get_wait_elements, get_link_elements, get_links
 from helpers.utils import extract_original_link, parse_activity_data
 
 
@@ -84,7 +84,8 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
         # Получение ссылок
         if i % 2 == 0 or i == max_scrolls-1:
             posts_parent_elelemt = get_wait_element(driver=driver, by=By.XPATH, searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[2]')
-            new_links = get_links(parent_element=posts_parent_elelemt)
+            link_elements = get_link_elements(posts_parent_elelemt)
+            new_links = get_links(link_elements=link_elements)
             print(f'Найдены новые ссылки на посты: {new_links}')
             post_links.update(new_links)
 
@@ -99,7 +100,7 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
 ##################################
 ### Парсинг ссылок на аккаунты ###
 ##################################
-def accounts_parsing(driver: webdriver, post_link: str) -> set:
+def accounts_parsing(driver: webdriver, post_link: str) -> list:
     """
     Функция для парсинга аккаунтов из поста
     """
@@ -161,7 +162,8 @@ def accounts_parsing(driver: webdriver, post_link: str) -> set:
 
     # Поиск ссылок на аккаунты из родительского элемента
     if find_links is True:
-        account_links = get_links(accounts_parent)
+        link_elements = get_link_elements(accounts_parent)
+        account_links = get_links(link_elements=link_elements)
         print(f'Найдены ссылки: {account_links}')
         return account_links
     return []
@@ -209,7 +211,8 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
         description = account_description_parent_element.text
 
         # Парсинг ссылок из описания аккаунта
-        find_links_description = get_links(account_description_parent_element)
+        link_elements = get_link_elements(account_description_parent_element)
+        find_links_description = get_links(link_elements=link_elements)
         links_description.update([extract_original_link(find_link_description) for find_link_description in find_links_description])
 
         # Парсинг ссылок из окна контактов
@@ -234,7 +237,8 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
                     is_error=False
                 )
                 if link_parent_element:
-                    find_links_modal = get_links(link_parent_element)
+                    link_elements = get_link_elements(link_parent_element)
+                    find_links_modal = get_links(link_elements=link_elements)
                     links_contacts.update([extract_original_link(find_link_modal) for find_link_modal in find_links_modal])
                     break
     print(f'\n___________________\nСсылка на аккаунт: {account_link}\ndescription: {description}\n'
