@@ -1,5 +1,6 @@
 #!.venv/bin/python
 
+import time
 import json
 import random
 import argparse
@@ -42,7 +43,9 @@ def main(message_num):
                 raise Exception(f'Ссылка "{account_link}" является невалидной. Должна быть ссылка на аккаунт')
             send_message_and_follow(driver=driver, account_link=account_link, message=message)
             print(f'Отправил сообщение #{count} for account: {account_link}')
+            
             count += 1
+            time.sleep(random.randrange(config.ACCOUNTS_BREAK_MIN_TIME, config.ACCOUNTS_BREAK_MAX_TIME))
 
         close_driver(driver=driver)
 
@@ -54,4 +57,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     print(f'message num: {args.message_num}')
-    main(args.message_num)
+    main(message_num=args.message_num)
