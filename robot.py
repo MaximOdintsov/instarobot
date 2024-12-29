@@ -12,8 +12,6 @@ from helpers.selenium_management import open_link, get_wait_element, get_wait_el
 from helpers.utils import extract_original_link, parse_activity_data
 
 
-
-
 ###################
 ### Авторизация ###
 ###################
@@ -95,6 +93,9 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
             break
         last_height = new_height
     return post_links
+
+
+
 
 
 ##################################
@@ -272,37 +273,79 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     return account_info
 
 
-#########################################################
-### Подписка и отправка рандомного сообщения аккаунту ###
-#########################################################
-def send_message_and_follow(driver: webdriver, account_link: str, message: str):
-    open_link(driver=driver, link=account_link)
-    time.sleep(2)
+def account_get_post_links(driver: webdriver, account_link: str) -> list:
+    """
+    Парсинг ссылок на посты аккаунта
+    """
+    open_link(driver, account_link)
+    posts_parent_element = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/div[2]',
+        delay=15,
+        sleep=3,
+        attempts=2
+    )
+    link_elements = get_link_elements(posts_parent_element)
+    post_links = get_links(link_elements=link_elements)
+    return post_links
 
-    # Подписка + сообщение
+
+###################################
+### Взаимодействие с аккаунтами ###
+###################################
+def account_follow(driver: webdriver, account_link: str) -> bool:
+    """
+    Подписка на аккаунт
+    """
+    open_link(driver=driver, link=account_link)
+    
+    # Кнопка "Подписаться"
     follow_button = get_wait_element(
         driver=driver,
         by=By.XPATH,
         searched_elem=".//div[contains(text(), 'Подписаться')]",
-        delay=2,
+        delay=15,
         attempts=2,
         is_error=False
     )
-    send_message_button = get_wait_element(
-        driver=driver,
-        by=By.XPATH,
-        searched_elem=".//div[@role='button' and contains(text(), 'Отправить сообщение')]",
-        delay=2,
-        attempts=2,
-        is_error=False
-    )
-
     # Нажать "Подписаться"
     if follow_button:
         follow_button.click()
         time.sleep(random.randrange(1, 3))
-        print(f'Подписался на аккаунт')
+        
+        check_follow_button = get_wait_element(
+            driver=driver,
+            by=By.XPATH,
+            searched_elem=".//div[contains(text(), 'Подписаться')]",
+            delay=3,
+            attempts=1,
+            is_error=False,
+            logs=False
+        )
+        if not check_follow_button:
+            print(f'Подписался на аккаунт')
+            return True
+    print('Не удалось подписаться на аккаунт')
+    return False
 
+
+def account_send_message(driver: webdriver, account_link: str, message: str) -> bool:
+    """
+    Отправка сообщения аккаунту
+    """
+    open_link(driver=driver, link=account_link)
+    
+    # Кнопка "Отправить сообщение"
+    send_message_button = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem=".//div[@role='button' and contains(text(), 'Отправить сообщение')]",
+        delay=15,
+        sleep=3,
+        attempts=2,
+        is_error=False
+    )
     # Нажать "Отправить сообщение"
     if send_message_button:
         send_message_button.click()
@@ -310,29 +353,55 @@ def send_message_and_follow(driver: webdriver, account_link: str, message: str):
             driver=driver,
             by=By.XPATH,
             searched_elem="//button[text()='Не сейчас']",
-            delay=3,
-            logs=False,
-            is_error=False,
-            attempts=1
+            delay=4,
+            sleep=2,
+            attempts=1,
+            is_error=False
         )
         if notification_button:
             notification_button.click()
-            print(f'Перешел в директ')
-
-    # Отправить рандомный шаблон сообщения
+            print(f'Перешел в директ аккаунта: {account_link}')
+    # Отправить сообщение
     if send_message_button:
         send_message_field_element = get_wait_element(
             driver=driver,
             by=By.XPATH,
             searched_elem=".//div[@role='textbox' and @aria-describedby='Сообщение' and @aria-placeholder='Напишите сообщение…']",
-            delay=2,
-            attempts=2,
+            delay=15,
+            sleep=2,
+            attempts=1,
             is_error=False
         )
         if send_message_field_element:
             send_message_field_element.clear()
             ActionChains(driver).move_to_element(send_message_field_element).click().send_keys(message).perform()
-            time.sleep(random.randrange(1, 4))
-            send_message_field_element.send_keys(Keys.ENTER)
-            time.sleep(random.randrange(2, 4))
-            print(f'Отправил сообщение')
+            time.sleep(random.randrange(2, 5))
+            send_message_field_element.send_keys(Keys.ENTER)  # Отправляет коммент
+            print(f'Отправил сообщение аккаунту {account_link}')
+            return True
+    print(f'Не удалось отправить сообщение аккаунту {account_link}')
+    return False
+
+
+def account_send_comment(driver: webdriver, post_link: str, comment: str) -> bool:
+    """
+    Отправка комментария к посту
+    """
+    open_link(driver, post_link)
+    
+    comment_element = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem='//textarea[@aria-label="Добавьте комментарий..."]',
+        delay=15,
+        sleep=3,
+        attempts=2
+    )
+    if comment_element:    
+        ActionChains(driver).click(comment_element).send_keys(str(comment)).perform()
+        time.sleep(random.randrange(2, 5))
+        driver.switch_to.active_element.send_keys(Keys.ENTER)  # Отправляет коммент
+        print(f'Написал комментарий к посту: {post_link}')
+        return True
+    print(f'Не получилось написать комментарий к посту: {post_link}')
+    return False

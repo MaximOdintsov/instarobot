@@ -9,10 +9,15 @@ AUTH_DATA_PATH = 'data/incoming_data/auth_data.json'
 # for parser
 QUERIES_PATH = 'data/incoming_data/queries.json'
 INSTA_ACCOUNTS_DATA_PATH = 'data/out/insta_accounts.xlsx'
-# for send_messages
+# for spam_robot
 MESSAGE_TEMPLATES_PATH = 'data/incoming_data/message_templates.json'
+COMMENT_TEMPLATES_PATH = 'data/incoming_data/comment_templates.json'
 ACCOUNT_LINKS_PATH = 'data/incoming_data/account_links.txt'
 
-# Интервал между отправкой сообщений
-ACCOUNTS_BREAK_MIN_TIME = 30
-ACCOUNTS_BREAK_MAX_TIME = 50
+# Сон после обработки аккаунта
+ACCOUNT_BREAK_MIN_TIME = 5
+ACCOUNT_BREAK_MAX_TIME = 10
+
+# Интервал после действия
+ACTION_BREAK_MIN_TIME = 5
+ACTION_BREAK_MAX_TIME = 10
