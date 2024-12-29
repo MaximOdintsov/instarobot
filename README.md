@@ -6,4 +6,4 @@
 5) Настройки интервалов находятся в config.py: **ACCOUNT_BREAK_MIN_TIME**, **ACCOUNT_BREAK_MAX_TIME**, **ACTION_BREAK_MIN_TIME**, **ACTION_BREAK_MAX_TIME** 
 ---
 ### Запуск робота
-Команда `.venv/bin/python3 send_messages --links-num=3 --is-follow --is-message --is-comment` (Описание каждого из параметров записано в spam_robot.py)
+Команда `./spam_robot --links-num=3 --is-follow --is-message --is-comment` (Описание каждого из параметров записано в spam_robot.py)
