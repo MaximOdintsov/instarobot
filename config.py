@@ -5,14 +5,17 @@ DATABASE_URL = F"sqlite+aiosqlite:///{DB_PATH}"
 
 
 # PATHS
-AUTH_DATA_PATH = 'data/incoming_data/auth_data.json'
+AUTH_DATA_PATH = 'data/in/auth_data.json'
 
-QUERIES_PATH = 'data/incoming_data/queries.json'
+QUERIES_PATH = 'data/in/queries.json'
 INSTA_ACCOUNTS_DATA_PATH = 'data/out/insta_accounts.xlsx'
 
-MESSAGE_TEMPLATES_PATH = 'data/incoming_data/message_templates.json'
-COMMENT_TEMPLATES_PATH = 'data/incoming_data/comment_templates.json'
-ACCOUNT_LINKS_PATH = 'data/incoming_data/account_links.txt'
+MESSAGE_TEMPLATES_PATH = 'data/in/message_templates.json'
+COMMENT_TEMPLATES_PATH = 'data/in/comment_templates.json'
+ACCOUNT_LINKS_PATH = 'data/in/account_links.txt'
+
+# MODELS
+ACCOUNT_TYPE_MODEL_PATH = 'data/modеls/account_type.pkl'
 
 
 # Сон после обработки аккаунта

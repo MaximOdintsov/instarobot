@@ -22,6 +22,7 @@ def auth(driver: webdriver, username: str, password: str):
         driver=driver,
         by=By.NAME,
         searched_elem='username',
+        sleep=2,
         delay=5,
     )
     username_element.send_keys(username)
@@ -30,6 +31,7 @@ def auth(driver: webdriver, username: str, password: str):
         driver=driver,
         by=By.NAME,
         searched_elem='password',
+        sleep=2,
         delay=5,
     )
     password_element.send_keys(password)
@@ -38,6 +40,7 @@ def auth(driver: webdriver, username: str, password: str):
         driver=driver,
         by=By.XPATH,
         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div/div[3]/button/div',
+        sleep=1,
         delay=5,
     )
     enter_element.click() 
