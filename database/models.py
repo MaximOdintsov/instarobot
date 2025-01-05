@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-class AccountType(enum.Enum):
+class AccountType(enum.Enum):  # FIXME Заменить на 1, 2, 3, 4 и тд
     ARTIST = "ARTIST"
     BEATMAKER = "BEATMAKER"
     LABEL = "LABEL"

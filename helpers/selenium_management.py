@@ -28,7 +28,7 @@ def open_link(driver: webdriver, link, attempts: int = 3, logs: bool = True) -> 
     for attempt in range(attempts):
         try:
             response = requests.get(link, timeout=10)
-            if 400 <= response.status_code < 600:
+            if 400 <= response.status_code < 600:  # FIXME Даже если 429, происходит ошибка. Например, https://www.instagram.com/p/DD5MIVtRq2_/
                 print(f"Ошибка HTTP-кода: {response.status_code}. Страница недоступна.")
                 return False
             else:

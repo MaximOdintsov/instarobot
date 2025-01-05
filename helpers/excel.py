@@ -90,7 +90,7 @@ def write_excel(accounts: list, out_path: str):
     pyxl[1, 1] = "Ссылка на аккаунт"
     pyxl[1, 2] = "Описание страницы"
     pyxl[1, 3] = "Найденная почта"
-    pyxl[1, 4] = "Ссылки из описания"  # new
+    pyxl[1, 4] = "Ссылки из описания"
     pyxl[1, 5] = "Ссылки из контактов"
     pyxl[1, 6] = "Кол-во постов"
     pyxl[1, 7] = "Кол-во подписчиков"
@@ -107,8 +107,8 @@ def write_excel(accounts: list, out_path: str):
         pyxl[r, 1] = account.link
         pyxl[r, 2] = account.data.get('description', '')
         pyxl[r, 3] = "\n".join(account.data.get('emails', []))
-        pyxl[r, 4] = "\n\n".join(account.data.get('links_description', []))  # new
-        pyxl[r, 5] = "\n\n".join(account.data.get('links_contacts', []))
+        pyxl[r, 4] = "\n".join(account.data.get('links_description', [])) or "\n".join(account.data.get('links', []))
+        pyxl[r, 5] = "\n".join(account.data.get('links_contacts', []))
         pyxl[r, 6] = account.data.get('posts', '')
         pyxl[r, 7] = account.data.get('subscribers', '')
         pyxl[r, 8] = account.data.get('subscriptions', '')
