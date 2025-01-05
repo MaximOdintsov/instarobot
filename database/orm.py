@@ -14,8 +14,8 @@ async def create_tables(async_engine: create_async_engine):
         await conn.run_sync(Base.metadata.create_all)
 
 
-async def insert_account(async_session: sessionmaker, account_link: str, is_processed: bool = False,
-                         account_data: dict = {}):
+async def insert_account(async_session: sessionmaker, account_link: str, account_type: AccountType = None, 
+                         is_processed: bool = False, account_data: dict = {}):
 
     async with async_session() as session:
         # Проверяем, существует ли запись с таким account_link
@@ -24,18 +24,23 @@ async def insert_account(async_session: sessionmaker, account_link: str, is_proc
         )
         account = result.scalar_one_or_none()
 
-        if account and account_data:  # Если аккаунт существует и есть данные, то обновляем объект
+        # Если аккаунт существует и есть данные, то обновляем объект
+        if account and account_data:
             account.data = account_data
             account.is_processed = is_processed
-            session.add(account)
-        elif not account:  # Если аккаунта не существует, создаём новый объект
-            new_account = Account(
+        # Если аккаунта не существует, создаём новый объект
+        elif not account:
+            account = Account(
                 link=account_link,
                 data=account_data,
                 is_processed=is_processed
             )
-            session.add(new_account)
-
+        else:
+            return
+        if account_type:
+            account.account_type = account_type
+        
+        session.add(account)
         await session.commit()  # После добавления всех новых объектов — коммитим
 
 
