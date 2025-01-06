@@ -57,6 +57,7 @@ def account_links_parsing(driver: webdriver, post_query: str, max_scrolls: int):
             link_type = validate_instagram_url(account_link)
             if link_type == ACCOUNT_VALUE:
                 account_links.append(account_link)
+        time.sleep(random.randrange(10, 60))
                 
     # Запись новых ссылок на посты в файл
     with open(config.POST_LINKS_PATH, 'w') as f:
@@ -84,7 +85,6 @@ def account_data_parser(driver: webdriver, account_link: str, post_query: str):
         }
     )
     account_data['predicted_account_type'] = get_account_type(data=df, threshold=0.8).value
- 
     return account_data
 
 
@@ -127,10 +127,11 @@ async def main(max_scrolls: int):
                 is_processed=True,
                 account_data=account_data,
             )
+            time.sleep(random.randrange(10, 90))
         print(f'Информация об аккаунтах спарсилась и записалась в БД!')
         
         close_driver(driver=driver)
-        sleep_time = random.randrange(300, 1200)  # 5 мин - 20 мин
+        sleep_time = random.randrange(1200, 4200)
         print(f'Сон {sleep_time} секунд...')
         time.sleep(sleep_time)
     
@@ -141,7 +142,7 @@ async def main(max_scrolls: int):
         await mark_account_as_sent(async_session, account)
 
 
-@click.option("--max-scrolls", default=1, help="Количество прокруток страницы вниз при парсинге постов")
+@click.option("--max-scrolls", default=2, help="Количество прокруток страницы вниз при парсинге постов")
 @click.command(name="accounts_parser")
 def run(max_scrolls):
     """

@@ -84,7 +84,14 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
 
         # Получение ссылок
         if i % 2 == 0 or i == max_scrolls-1:
-            posts_parent_elelemt = get_wait_element(driver=driver, by=By.XPATH, searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[2]')
+            posts_parent_elelemt = get_wait_element(
+                driver=driver, 
+                by=By.XPATH, 
+                searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[2]',
+                sleep=5,
+                delay=20,
+                attempts=1,
+            )
             link_elements = get_link_elements(posts_parent_elelemt)
             new_links = get_links(link_elements=link_elements)
             print(f'Найдены новые ссылки на посты: {new_links}')
@@ -316,21 +323,23 @@ def account_follow(driver: webdriver, account_link: str) -> bool:
     if follow_button:
         follow_button.click()
         time.sleep(random.randrange(1, 3))
-        
-        check_follow_button = get_wait_element(
-            driver=driver,
-            by=By.XPATH,
-            searched_elem=".//div[contains(text(), 'Подписаться')]",
-            delay=3,
-            attempts=1,
-            is_error=False,
-            logs=False
-        )
-        if not check_follow_button:
-            print(f'Подписался на аккаунт')
-            return True
-    print('Не удалось подписаться на аккаунт')
-    return False
+    
+    # Проверка подписки
+    check_follow_button = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem=".//div[contains(text(), 'Подписки')]",
+        delay=5,
+        attempts=1,
+        is_error=False,
+        logs=False
+    )
+    if check_follow_button:
+        print(f'Подписка на аккаунт оформлена!')
+        return True
+    else:
+        print('Не удалось оформить подписку на аккаунт')
+        return False
 
 
 def account_send_message(driver: webdriver, account_link: str, message: str) -> bool:
