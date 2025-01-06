@@ -5,7 +5,7 @@ from robot.models import AccountType
 from robot import config
 
 
-def get_account_type(data: pd.DataFrame, threshold: int = 0.8) -> str:
+def get_account_type(data: pd.DataFrame, threshold: float = 0.8) -> AccountType:
     """
     Предсказывает и возвращает тип аккаунта
     """
@@ -19,8 +19,6 @@ def get_account_type(data: pd.DataFrame, threshold: int = 0.8) -> str:
 
     # Проверяем вероятность
     if probs[0][pred_index] < threshold:  # Если вероятность меньше threshold (в %)
-        pred = AccountType.UNKNOWN  # Назначаем тип UNKNOWN
+        return AccountType.UNKNOWN  # Назначаем тип UNKNOWN
     else:
-        pred = AccountType(preds[0])  # Преобразуем строку в enum
-
-    return pred.value
+        return AccountType(preds[0])  # Преобразуем строку в enum

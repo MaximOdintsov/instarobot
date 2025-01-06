@@ -30,16 +30,8 @@ class Account(Base):
     data = Column(JSON, default=dict)
     account_type = Column(Enum(AccountType), nullable=False, default=AccountType.UNKNOWN)
     
-    # post - связанный объект Post
-    # 
-    
-    
-    # links = Column(JSON, default=[])
-    # all_description = Column(String, nullable=True)
-    # posts = Column(Integer, default=0)
-    # subscribers = Column(Integer, default=0)
-    # subscriptions = Column(Integer, default=0)
-    # last_post_datetime = Column(DateTime, nullable=True)
-    # hashtag = Column(String, nullable=True)
+    # is_checked - Проверен ли экземпляр верификатором
+    # post - Связанный объект Post
+
     
     

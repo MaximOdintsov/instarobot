@@ -1,9 +1,11 @@
 #!.venv/bin/python
 
-
 import click
 import os
 import importlib
+
+import asyncio
+from robot.orm import create_tables, async_engine
 
 
 def load_commands(cli):
@@ -38,4 +40,5 @@ def main():
 
 
 if __name__ == '__main__':
+    asyncio.run(create_tables(async_engine))
     main()
