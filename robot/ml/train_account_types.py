@@ -1,6 +1,5 @@
 import joblib
 import pandas as pd
-from sklearn.metrics import classification_report
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -11,7 +10,7 @@ from sklearn.metrics import classification_report
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 
-from ml_models.custom_transformers import TextCleaner, DomainExtractor
+from robot.ml.custom_transformers import TextCleaner, DomainBinarizer
 
 
 def train(file_path: str):
@@ -20,6 +19,7 @@ def train(file_path: str):
     ##################################
 
     # Создание DataFrame
+    file_path = 'data/modеls/train_data/merged_table.xlsx'
     df = pd.read_excel(file_path)
 
     # Замена пустых значений
@@ -37,12 +37,17 @@ def train(file_path: str):
     # 1 шаг: Замена имени столбца
     # 2 шаг: Удаление всех строк с типом "OTHER"
     df.rename(columns={"Предсказанный тип аккаунта": "Тип аккаунта"}, inplace=True)
-    # df = df[df["Тип аккаунта"] != "OTHER"]  # Это делать нельзя, тк OTHER не будет никогда
+    # df = df[df["Тип аккаунта"] != "OTHER"]
 
     # Заменяем значения столбца на 1, если не NaN, и на 0, если NaN
     # 1 шаг - замена на True и False
     # 2 шаг - замена на 1 и 0
     df['Почта существует'] = df['Найденная почта'].notna().astype(int)
+
+    # Разделяем ссылки в строках через '\n'
+    df['Ссылки из описания'] = df['Ссылки из описания'].str.split('\n')
+    df['Ссылки из контактов'] = df['Ссылки из контактов'].str.split('\n')
+
 
     ##################################
     # Шаг 2: Делим на X и y + разделяем данные на обучающую и тестовую выборки
@@ -81,18 +86,18 @@ def train(file_path: str):
                 
             ),
             (
-                'desc_links_tfidf', 
+                'desc_links_binarizer',
                 Pipeline([
-                    ('extract_domains', DomainExtractor()),  # Кастомный экстрактор для ссылок
-                    ('tfidf', TfidfVectorizer())  # Для текстовых значений
-                ]), 
+                    ('binarizer', DomainBinarizer())
+                    # при желании можно добавить StandardScaler() —
+                    # но для бинарных фич это обычно не критично
+                ]),
                 'Ссылки из описания'
             ),
             (
-                'contact_links_tfidf', 
+                'contact_links_binarizer',
                 Pipeline([
-                    ('extract_domains', DomainExtractor()),  # Кастомный экстрактор для ссылок
-                    ('tfidf', TfidfVectorizer())  # Для текстовых значений
+                    ('binarizer', DomainBinarizer())
                 ]),
                 'Ссылки из контактов'
             ),

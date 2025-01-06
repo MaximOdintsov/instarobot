@@ -2,10 +2,12 @@ import time
 import requests
 
 from selenium import webdriver
+from selenium.common import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from typing import List
+from selenium.webdriver.remote.webelement import WebElement
 
 
 def start_driver(attempts: int = 3, options: webdriver.ChromeOptions = None, logs: bool = True) -> webdriver.Chrome:
@@ -83,9 +85,8 @@ def check_page_opening(url, driver=None):
         return False
 
 
-
 def get_wait_element(driver: webdriver, by: By, searched_elem: str, delay: int = 30, attempts: int = 3,
-                     sleep: int = 0, is_error: bool = True, logs: bool = False) -> webdriver.remote.webelement.WebElement:
+                     sleep: int = 0, is_error: bool = True, logs: bool = False) -> WebElement | str:
     for attempt in range(attempts):
         try:
             time.sleep(sleep)
@@ -110,7 +111,7 @@ def get_wait_element(driver: webdriver, by: By, searched_elem: str, delay: int =
 
 
 def get_wait_elements(driver: webdriver, by: By, searched_elem: str, delay: int = 30, attempts: int = 3,
-                      sleep: int = 0, is_error: bool = True, logs: bool = False) -> List[webdriver.remote.webelement.WebElement]:
+                      sleep: int = 0, is_error: bool = True, logs: bool = False) -> List[WebElement]:
     for attempt in range(attempts):
         try:
             time.sleep(sleep)
@@ -135,12 +136,12 @@ def close_driver(driver: webdriver, logs: bool = True):
     except Exception as e:
         if logs:
             print(f'Ошибка при закрытии драйвера: "{e}"')
-        
 
-def get_link_elements(parent_element: webdriver) -> List[webdriver.remote.webelement.WebElement]:
+
+def get_link_elements(parent_element: webdriver) -> List[WebElement]:
     link_elements = get_wait_elements(
-        driver=parent_element, 
-        by=By.TAG_NAME, 
+        driver=parent_element,
+        by=By.TAG_NAME,
         searched_elem='a',
         delay=10,
         attempts=1,
@@ -149,11 +150,11 @@ def get_link_elements(parent_element: webdriver) -> List[webdriver.remote.webele
     return link_elements
 
 
-def get_links(link_elements: List[webdriver.remote.webelement.WebElement]) -> list:
+def get_links(link_elements: List[WebElement]) -> list:
     """
     Поиск ссылок в дочерних элементах из родительского элемента
     """
-    
+
     # Сбор и вывод всех ссылок
     link_list = set()
     for link_element in link_elements:

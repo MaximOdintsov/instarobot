@@ -1,5 +1,5 @@
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, PatternFill, Border, Side
+from openpyxl.styles import Border, Side
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.styles import PatternFill, Alignment, Font
 

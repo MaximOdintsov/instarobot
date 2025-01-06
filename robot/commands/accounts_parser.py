@@ -1,23 +1,21 @@
 import json
 import joblib
 import asyncio
+import click
 import pandas as pd
-
 from selenium import webdriver
 
-from helpers.selenium_management import start_driver, close_driver
-from helpers.utils import extract_emails
-from helpers.utils import POST_VALUE, ACCOUNT_VALUE, validate_instagram_url
-from database.orm import async_engine, async_session, insert_account, create_tables, get_accounts_not_processed, get_accounts_not_send, mark_account_as_sent
-from helpers.excel import write_excel
-import config
-from robot import auth, turn_to_posts_page,get_post_links, accounts_parsing, parsing_account_info
+from robot.helpers.selenium_management import start_driver, close_driver
+from robot.helpers.utils import extract_emails, validate_instagram_url, POST_VALUE, ACCOUNT_VALUE
+from robot.orm import (async_engine, async_session, insert_account, create_tables, get_accounts_not_processed,
+                       get_accounts_not_send, mark_account_as_sent)
+from robot.helpers.excel import write_excel
+from robot.robot import auth, turn_to_posts_page, get_post_links, accounts_parsing, parsing_account_info
+from robot import config
+from robot.ml.predicting import get_account_type
 
 
-async def parsing(driver: webdriver, post_query: str, max_scrolls: int = 2):
-    # Загрузка модели
-    account_type_model = joblib.load(config.ACCOUNT_TYPE_MODEL_PATH)
-
+async def parser(driver: webdriver, post_query: str, max_scrolls: int = 2):
     accounts = await get_accounts_not_processed(async_session)
     if not accounts:
         # Проверка, найдены ли посты по хэштегу
@@ -55,12 +53,6 @@ async def parsing(driver: webdriver, post_query: str, max_scrolls: int = 2):
         account_data['hashtag'] = post_query.replace('%23', '#')
         account_data['emails'] = extract_emails(account_data.get('description', ''))
 
-        print('Описание страницы', account_data.get('description', ''))
-        print('Ссылки из описания', "\n".join(account_data.get('links_description', [])))
-        print('Ссылки из контактов', "\n".join(account_data.get('links_contacts', [])))
-        print('Почта существует', 1 if account_data.get('emails', '') else 0)
-        print('Кол-во постов', account_data.get('posts', ''))
-
         # Предсказание типа аккаунта
         df = pd.DataFrame(
             {
@@ -71,15 +63,14 @@ async def parsing(driver: webdriver, post_query: str, max_scrolls: int = 2):
                 'Кол-во постов': [account_data.get('posts', '')]
             }
         )
-
-        preds = account_type_model.predict(df)
-        account_data['predicted_account_type'] = preds[0]
+        account_type = get_account_type(data=df, threshold=0.8)
+        account_data['predicted_account_type'] = account_type
 
         # Сохранение данных аккаунта
         await insert_account(
             async_session=async_session,
             account_link=account.link,
-            account_type=account_data['predicted_account_type'],
+            account_type=account_type,
             is_processed=True,
             account_data=account_data,
         )
@@ -89,28 +80,30 @@ async def parsing(driver: webdriver, post_query: str, max_scrolls: int = 2):
 async def main():
     await create_tables(async_engine=async_engine)
 
-    # Проверка
+    # Загрузка данных для авторизации
     with open(config.AUTH_DATA_PATH, "r", encoding="utf-8") as file:
         auth_data_list = json.load(file)
+
+    # Выбор аккаунта и проверка
     auth_data = auth_data_list[1]
     username = auth_data.get('username')
     password = auth_data.get('password')
     if not username or not password:
         raise Exception(f'В первом элементе нет username: "{username}" или password: "{password}"')
-
+    
     # Запуск драйвера
     driver = start_driver()
-
+    
     # Авториация
     auth(driver=driver, username=username, password=password)
-
+    
     # Парсинг запросов
     with open(config.QUERIES_PATH, "r", encoding="utf-8") as file:
         queries = json.load(file)
     
     # Запуск парсера
     for query in queries:
-        await parsing(driver=driver, post_query=f'%23{query}', max_scrolls=1)  # '%23' == '#'
+        await parser(driver=driver, post_query=f'%23{query}', max_scrolls=1)  # '%23' == '#'
     close_driver(driver=driver)
 
     # Запись данных в таблицу
@@ -120,5 +113,9 @@ async def main():
         await mark_account_as_sent(async_session, account)
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+@click.command(name="accounts_parser")
+def run():
+    """
+    Парсер Instagram-аккаунтов по хэштегам.
+    """
+    asyncio.run(parser())

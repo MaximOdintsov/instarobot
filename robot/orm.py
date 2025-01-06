@@ -1,11 +1,9 @@
-import asyncio
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from database.models import Base, Account, AccountType
-import config
+from robot.models import Base, Account, AccountType
+from robot import config
 
 
 async def create_tables(async_engine: create_async_engine):

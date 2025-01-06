@@ -7,7 +7,8 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-class AccountType(enum.Enum):  # FIXME Заменить на 1, 2, 3, 4 и тд
+class AccountType(enum.Enum):
+    UNKNOWN = "UNKNOWN"
     ARTIST = "ARTIST"
     BEATMAKER = "BEATMAKER"
     LABEL = "LABEL"
@@ -27,7 +28,7 @@ class Account(Base):
     is_send = Column(Boolean, default=False)  # Записан ли экземпляр в таблицу
     is_processed = Column(Boolean, default=False)  # Обработан ли экземпляр
     data = Column(JSON, default=dict)
-    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.OTHER)
+    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.UNKNOWN)
     
     # post - связанный объект Post
     # 
