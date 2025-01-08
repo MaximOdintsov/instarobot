@@ -30,7 +30,7 @@ def load_commands(cli):
 
 @click.group()
 def cli():
-    """Менеджер команд для Instagram-робота."""
+    """Менеджер команд"""
     pass
 
 

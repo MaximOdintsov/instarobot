@@ -79,24 +79,23 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
     post_links = set()
     max_scrolls += 1
     for i in range(1, max_scrolls):
+        # Получение ссылок
+        posts_parent_elelemt = get_wait_element(
+            driver=driver,
+            by=By.XPATH,
+            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[2]',
+            sleep=5,
+            delay=20,
+            attempts=1,
+        )
+        link_elements = get_link_elements(posts_parent_elelemt)
+        new_links = get_links(link_elements=link_elements)
+        print(f'Найдены новые ссылки на посты: {new_links}')
+        post_links.update(new_links)
+
         # Скролл страницы
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(wait_time)
-
-        # Получение ссылок
-        if i % 2 == 0 or i == max_scrolls-1:
-            posts_parent_elelemt = get_wait_element(
-                driver=driver, 
-                by=By.XPATH, 
-                searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[2]',
-                sleep=5,
-                delay=20,
-                attempts=1,
-            )
-            link_elements = get_link_elements(posts_parent_elelemt)
-            new_links = get_links(link_elements=link_elements)
-            print(f'Найдены новые ссылки на посты: {new_links}')
-            post_links.update(new_links)
 
         # Проверка конца страницы
         new_height = driver.execute_script("return document.body.scrollHeight")
