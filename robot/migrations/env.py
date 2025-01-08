@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from robot.models import Base
+from robot.database.models import Base
 from robot.config import SQLALCHEMY_URL
 
 # this is the Alembic Config object, which provides

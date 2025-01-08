@@ -5,7 +5,7 @@ import os
 import importlib
 
 import asyncio
-from robot.orm import create_tables, async_engine
+from robot.database.orm import create_tables, async_engine
 
 
 def load_commands(cli):

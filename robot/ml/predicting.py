@@ -1,7 +1,7 @@
 import joblib
 import pandas as pd
 import numpy as np
-from robot.models import AccountType
+from robot.database.models import AccountType
 from robot import config
 
 

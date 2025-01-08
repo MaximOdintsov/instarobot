@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from robot.models import Base, Account, AccountType
+from robot.database.models import Base, Account, AccountType
 from robot import config
 
 

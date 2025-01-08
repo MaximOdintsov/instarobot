@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import time
 import random
 import json
@@ -10,12 +8,12 @@ from selenium import webdriver
 
 from robot.helpers.selenium_management import start_driver, close_driver
 from robot.helpers.utils import extract_emails, validate_instagram_url, POST_VALUE, ACCOUNT_VALUE
-from robot.orm import async_session, insert_account, get_accounts_not_processed, get_accounts_not_send, mark_account_as_sent
+from robot.database.orm import async_session, insert_account, get_accounts_not_processed, get_accounts_not_send, mark_account_as_sent
 from robot.helpers.excel import write_excel
 from robot.robot import auth, turn_to_posts_page, get_post_links, accounts_parsing, parsing_account_info
 from robot import config
 from robot.ml.predicting import get_account_type
-from robot.models import AccountType
+from robot.database.models import AccountType
 
 
 def account_links_parsing(driver: webdriver, post_query: str, max_scrolls: int):
