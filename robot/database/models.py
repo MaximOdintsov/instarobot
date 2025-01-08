@@ -1,10 +1,19 @@
 import datetime
 import enum
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Enum, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Enum, Boolean, func
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+
+
+class STATUS(enum.Enum):
+    PARSING = 'PARSING'
+    PREDICTING = 'PREDICTING'
+    FAILED = 'FAILED'
+    READY = 'READY'
+    SENT = 'SENT'
+    VALIDATED = 'VALIDATED'
 
 
 class AccountType(enum.Enum):
@@ -20,18 +29,32 @@ class AccountType(enum.Enum):
 class Account(Base):
     __tablename__ = 'accounts'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    create_datetime = Column(DateTime, default=datetime.datetime.now)
-    # modify_datetime =
-    
-    link = Column(String, unique=True, nullable=False)
-    is_send = Column(Boolean, default=False)  # Записан ли экземпляр в таблицу
-    is_processed = Column(Boolean, default=False)  # Обработан ли экземпляр
-    data = Column(JSON, default=dict)
-    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.UNKNOWN)
-    
-    # is_checked - Проверен ли экземпляр верификатором
-    # post - Связанный объект Post
+    id = Column(
+        Integer, primary_key=True, autoincrement=True
+    )
+    create_datetime = Column(
+        DateTime, default=func.now()
+    )
+    modify_datetime = Column(
+        DateTime, onupdate=func.now()
+    )
 
-    
-    
+    link = Column(
+        String, unique=True, nullable=False
+    )
+    status = Column(
+        Enum(STATUS, name='status_enum'), nullable=False, default=STATUS.PARSING, server_default='PARSING'
+    )
+    account_type = Column(
+        Enum(AccountType, name='account_type_enum'), nullable=False, default=AccountType.UNKNOWN
+    )
+    data = Column(
+        JSON, default=dict
+    )
+
+    is_send = Column(
+        Boolean, default=False
+    )  # Записан ли экземпляр в таблицу
+    is_processed = Column(
+        Boolean, default=False
+    )  # Обработан ли экземпляр
