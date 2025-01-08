@@ -1,4 +1,3 @@
-import datetime
 import enum
 
 from sqlalchemy import Column, Integer, String, DateTime, JSON, Enum, Boolean, func
@@ -51,10 +50,3 @@ class Account(Base):
     data = Column(
         JSON, default=dict
     )
-
-    is_send = Column(
-        Boolean, default=False
-    )  # Записан ли экземпляр в таблицу
-    is_processed = Column(
-        Boolean, default=False
-    )  # Обработан ли экземпляр
