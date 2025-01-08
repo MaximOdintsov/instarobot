@@ -63,6 +63,7 @@ def turn_to_posts_page(driver: webdriver, query: str):
         by=By.XPATH,
         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div/div[2]/span',
         delay=3,
+        attempts=1,
         is_error=False
     )
     if nothing_found_element and 'не найдено' in nothing_found_element.text.lower():
@@ -103,9 +104,6 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
             break
         last_height = new_height
     return post_links
-
-
-
 
 
 ##################################

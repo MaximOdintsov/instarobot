@@ -25,9 +25,9 @@ def account_links_parsing(driver: webdriver, post_query: str, max_scrolls: int):
     Парсинг ссылок на аккаунты
     """
     account_links = []
-    # Проверка, найдены ли посты по хэштегу
+    # Переход на страницу с постами (по хэштегу) + проверка, найдены ли посты по хэштегу
     posts_found = turn_to_posts_page(driver=driver, query=post_query)
-    if not posts_found:
+    if posts_found is False:
         return 0
     
     ########################
@@ -97,7 +97,7 @@ async def main(max_scrolls: int):
     with open(config.AUTH_DATA_PATH, "r", encoding="utf-8") as file:
         auth_data_list = json.load(file)
     
-    auth_data = auth_data_list[1]
+    auth_data = auth_data_list[0]
     username = auth_data.get('username')
     password = auth_data.get('password')
     if not username or not password:
