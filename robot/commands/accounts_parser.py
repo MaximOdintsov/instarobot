@@ -27,12 +27,11 @@ from robot.ml.predicting import get_account_type
 from robot.database.models import Account, AccountType, STATUS
 
 
-def account_links_parsing(driver: webdriver, post_query: str, max_scrolls: int):
+async def account_links_parsing(driver: webdriver, post_query: str, max_scrolls: int):
     """
     1 шаг: Переход на страницу с постами и парсинг ссылок на посты
-    2 шаг: Парсинг ссылок на аккаунты
+    2 шаг: Парсинг ссылок на аккаунты и запись в БД
     """
-    account_links = []
     posts_found = turn_to_posts_page(driver=driver, query=post_query)
     if posts_found is False:
         return 0
@@ -50,21 +49,28 @@ def account_links_parsing(driver: webdriver, post_query: str, max_scrolls: int):
     print(f"Найдено {len(post_links)} ссылок на посты")
 
     # Парсинг ссылок на аккаунты
-    for idx, post_link in enumerate(post_links[:2]):
+    parsed_post_links = []
+    for idx, post_link in enumerate(post_links):
         print(f'Парсинг поста #{idx}. Ссылка: {post_link}')
         raw_account_links = accounts_parsing(driver=driver, post_link=post_link)
+        if raw_account_links:
+            parsed_post_links.append(post_link)
         for account_link in raw_account_links:
             if validate_instagram_url(account_link) == ACCOUNT_VALUE:
-                account_links.append(account_link)
-        time.sleep(1)
-        # time.sleep(random.randrange(10, 60))
+                await create_or_update_object(
+                    async_session_factory=async_session,  # Важно: передаём фабрику как параметр
+                    model=Account,
+                    filters={'link': account_link},
+                    defaults={'link': account_link, 'status': STATUS.PARSING}
+                )
+        time.sleep(random.randrange(5, 30))
 
     # Запись новых ссылок на посты в файл
     with open(config.POST_LINKS_PATH, 'w') as f:
-        merged_post_links = list(set(old_post_links + post_links))
+        merged_post_links = list(set(old_post_links + parsed_post_links))
         f.write(json.dumps(merged_post_links, indent=4))
 
-    return account_links
+    return True
 
 
 def account_data_parser(driver: webdriver, account_link: str, post_query: str):
@@ -112,17 +118,10 @@ async def main(max_scrolls: int):
         driver = start_driver()  # Запуск драйвера
         auth(driver=driver, username=username, password=password)  # Авторизация
 
-        # Получение ссылок на аккаунты и сохранение их в БД (статус PARSING)
-        account_links = account_links_parsing(driver, post_query=query, max_scrolls=max_scrolls)
-        for link in account_links:
-            await create_or_update_object(
-                async_session_factory=async_session,  # Важно: передаём фабрику как параметр
-                model=Account,
-                filters={'link': link},
-                defaults={'link': link, 'status': STATUS.PARSING}
-            )
+        # Получение ссылок на аккаунты и сохранение их в БД
+        await account_links_parsing(driver, post_query=query, max_scrolls=max_scrolls)
 
-        # Парсинг содержимого аккаунтов и запись в БД (переводим в статус READY)
+        # Парсинг содержимого аккаунтов и запись его в БД
         accounts = await get_objects_by_filter(
             async_session_factory=async_session,
             model=Account,
@@ -140,13 +139,13 @@ async def main(max_scrolls: int):
                           'status': STATUS.READY,
                           'data': account_data}
             )
-            time.sleep(random.randrange(10, 90))
+            time.sleep(random.randrange(5, 30))
 
         print("Информация об аккаунтах успешно сохранена в БД!")
 
         # Закрываем драйвер и уходим в сон
         close_driver(driver=driver)
-        sleep_time = random.randrange(1200, 4200)
+        sleep_time = random.randrange(10, 60)
         print(f"Сон {sleep_time} секунд...")
         time.sleep(sleep_time)
 

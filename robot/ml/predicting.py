@@ -18,7 +18,9 @@ def get_account_type(data: pd.DataFrame, threshold: float = 0.8) -> AccountType:
     pred_index = np.argmax(probs[0])  # Максимальная вероятность в первой строке
 
     # Проверяем вероятность
-    if probs[0][pred_index] < threshold:  # Если вероятность меньше threshold (в %)
+    prob_percent = probs[0][pred_index]
+    print(f'Предсказанный класс: "{preds[0]}". Вероятность класса: "{prob_percent}"')
+    if prob_percent < threshold:  # Если вероятность меньше threshold (в %)
         return AccountType.UNKNOWN  # Назначаем тип UNKNOWN
     else:
         return AccountType(preds[0])  # Преобразуем строку в enum

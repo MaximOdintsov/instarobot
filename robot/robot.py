@@ -77,8 +77,7 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
     """
     last_height = driver.execute_script("return document.body.scrollHeight")
     post_links = set()
-    max_scrolls += 1
-    for i in range(1, max_scrolls):
+    for i in range(max_scrolls):
         # Получение ссылок
         posts_parent_elelemt = get_wait_element(
             driver=driver,
