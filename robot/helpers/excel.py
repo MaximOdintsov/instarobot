@@ -2,6 +2,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Border, Side
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.styles import PatternFill, Alignment, Font
+from robot.database.models import AccountType
 
 
 class PyXLWriter:
@@ -89,34 +90,32 @@ def write_excel(accounts: list, out_path: str):
     # Хедеры
     pyxl[1, 1] = "Ссылка на аккаунт"
     pyxl[1, 2] = "Описание страницы"
-    pyxl[1, 3] = "Найденная почта"
-    pyxl[1, 4] = "Ссылки из описания"
-    pyxl[1, 5] = "Ссылки из контактов"
-    pyxl[1, 6] = "Кол-во постов"
-    pyxl[1, 7] = "Кол-во подписчиков"
-    pyxl[1, 8] = "Кол-во подписок"
-    pyxl[1, 9] = "Хэштег, по которому найден аккаунт"
-    pyxl[1, 10] = "Дата сохранения"
-    pyxl[1, 11] = "Предсказанный тип аккаунта"
-    pyxl[1, 12] = "Комментарий верификатора"
-    pyxl[1, 13] = "Тип аккаунта (записывается всегда). Значения: ARTIST, BEATMAKER, LABEL, MARKET, COMMUNITY, OTHER"
+    pyxl[1, 3] = "Предсказанный тип аккаунта"
+    pyxl[1, 4] = "Верифицированный тип аккаунта ()"
+    pyxl[1, 5] = "Найденная почта"
+    pyxl[1, 6] = "Ссылки из описания"
+    pyxl[1, 7] = "Ссылки из контактов"
+    pyxl[1, 8] = "Кол-во постов"
+    pyxl[1, 9] = "Кол-во подписчиков"
+    pyxl[1, 10] = "Кол-во подписок"
+    pyxl[1, 11] = "Хэштег"
+    pyxl[1, 12] = "Дата сохранения"
 
     # Данные
     for rid, account in enumerate(accounts):
         r = rid + 2
-        pyxl[r, 1] = account.link
+        pyxl[r, 1] = account.data.get('account_link', '')
         pyxl[r, 2] = account.data.get('description', '')
-        pyxl[r, 3] = "\n".join(account.data.get('emails', []))
-        pyxl[r, 4] = "\n".join(account.data.get('links_description', [])) or "\n".join(account.data.get('links', []))
-        pyxl[r, 5] = "\n".join(account.data.get('links_contacts', []))
-        pyxl[r, 6] = account.data.get('posts', '')
-        pyxl[r, 7] = account.data.get('subscribers', '')
-        pyxl[r, 8] = account.data.get('subscriptions', '')
-        pyxl[r, 9] = account.data.get('hashtag', '')
-        pyxl[r, 10] = account.create_datetime
-        pyxl[r, 11] = account.account_type.value
-        pyxl[r, 12] = ''
-        pyxl[r, 13] = ''
+        pyxl[r, 3] = account.data.get('predicted_account_type', AccountType.UNKNOWN)
+        pyxl[r, 4] = account.data.get('verified_account_type', '')
+        pyxl[r, 5] = "\n".join(account.data.get('emails', []))
+        pyxl[r, 6] = "\n".join(account.data.get('links_description', []))
+        pyxl[r, 7] = "\n".join(account.data.get('links_contacts', []))
+        pyxl[r, 8] = account.data.get('posts', '')
+        pyxl[r, 9] = account.data.get('subscribers', '')
+        pyxl[r, 10] = account.data.get('subscriptions', '')
+        pyxl[r, 11] = account.data.get('hashtag', '')
+        pyxl[r, 12] = account.create_datetime
 
     # Сохраняем файл
     pyxl.save(out_path)
