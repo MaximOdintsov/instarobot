@@ -99,7 +99,9 @@ def capture_output_to_file(command_name: str):
 
             # Пишем и в файл, и в консоль
             self.log_file.write(out_line)
+            self.log_file.flush()
             self.real_stream.write(out_line)
+            self.real_stream.flush()
 
         def _prefix(self):
             """
