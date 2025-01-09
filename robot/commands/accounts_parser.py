@@ -81,6 +81,7 @@ def account_data_parser(driver: webdriver, account_link: str, post_query: str):
     account_data['account_link'] = account_link
     account_data['hashtag'] = post_query.replace('%23', '#')
     account_data['emails'] = extract_emails(account_data.get('description', ''))
+    account_data['verified_account_type'] = ''
 
     # Предсказание типа аккаунта
     df = pd.DataFrame({
@@ -120,6 +121,7 @@ async def main(max_scrolls: int):
         auth(driver=driver, username=username, password=password)  # Авторизация
 
         # Получение ссылок на аккаунты и сохранение их в БД
+        print(f'Поиск постов по хэштегу: #{query}')
         await account_links_parsing(driver, post_query=query, max_scrolls=max_scrolls)
 
         # Парсинг содержимого аккаунтов и запись его в БД
@@ -172,5 +174,4 @@ async def main(max_scrolls: int):
 @click.command(name="accounts_parser")
 @capture_output_to_file("accounts_parser")
 def run(max_scrolls):
-    print(f'command')
     asyncio.run(main(max_scrolls))
