@@ -15,6 +15,7 @@ from robot.helpers.utils import (
 )
 from robot.database.orm import  async_session, create_or_update_object, get_object_by_filter, get_objects_by_filter
 from robot.helpers.excel import write_excel
+from robot.helpers.logs import capture_output_to_file
 from robot.robot import (
     auth,
     turn_to_posts_page,
@@ -169,5 +170,7 @@ async def main(max_scrolls: int):
 
 @click.option("--max-scrolls", default=2, help="Количество прокруток страницы вниз при парсинге постов")
 @click.command(name="accounts_parser")
+@capture_output_to_file("accounts_parser")
 def run(max_scrolls):
+    print(f'command')
     asyncio.run(main(max_scrolls))

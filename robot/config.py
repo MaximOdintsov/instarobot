@@ -1,10 +1,14 @@
 # DATABASE
+
 DB_PATH = "data/db/instagram.db"
 SQLALCHEMY_URL = f"sqlite:///{DB_PATH}"
 DATABASE_URL = F"sqlite+aiosqlite:///{DB_PATH}"
 
 
 # PATHS
+LOGS_ROOT = 'data/logs'
+COMMANDS_ROOT = 'robot/commands'
+
 AUTH_DATA_PATH = 'data/in/auth_data.json'
 
 QUERIES_PATH = 'data/in/queries.json'
