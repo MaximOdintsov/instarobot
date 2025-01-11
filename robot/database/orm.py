@@ -12,16 +12,18 @@ from sqlalchemy.orm import sessionmaker
 from robot.conf import config
 from robot.database.models import Base
 
-# Определяем универсальный тип T, привязанный к моделям (наследникам Base).
+
+# Универсальный тип T, привязанный к моделям (наследникам Base).
 T = TypeVar('T', bound=Base)
 
-# Создаём асинхронный движок (engine).
+
+# Асинхронный движок (engine).
 async_engine: AsyncEngine = create_async_engine(
     config.DATABASE_URL,  # sqlite+aiosqlite:///<path_to_db>
-    echo=True  # установить в False в продакшене
+    # echo=True  # установить в False в продакшене
 )
 
-# Создаём фабрику асинхронных сессий.
+# Фабрика асинхронных сессий.
 async_session: sessionmaker[AsyncSession] = sessionmaker(
     bind=async_engine,
     class_=AsyncSession,
@@ -41,7 +43,7 @@ async def create_tables(async_engine: AsyncEngine) -> None:
 async def get_object_by_filter(
     async_session_factory: sessionmaker[AsyncSession],
     model: Type[T],
-    filters: Optional[Dict[str, Any]] = None,
+    filters: Optional[Dict[str, Any]] = {},
 ) -> Optional[T]:
     """
     Получить единственный объект по заданным фильтрам.
@@ -65,7 +67,7 @@ async def get_object_by_filter(
 async def get_objects_by_filter(
     async_session_factory: sessionmaker[AsyncSession],
     model: Type[T],
-    filters: Optional[Dict[str, Any]] = None,
+    filters: Optional[Dict[str, Any]] = {},
 ) -> List[T]:
     """
     Получить список объектов по заданным фильтрам.
@@ -89,8 +91,8 @@ async def get_objects_by_filter(
 async def create_or_update_object(
     async_session_factory: sessionmaker[AsyncSession],
     model: Type[T],
-    filters: Optional[Dict[str, Any]] = None,
-    defaults: Optional[Dict[str, Any]] = None,
+    filters: Optional[Dict[str, Any]] = {},
+    defaults: Optional[Dict[str, Any]] = {},
 ) -> Optional[T]:
     """
     Создать или обновить объект в базе данных.
@@ -103,7 +105,6 @@ async def create_or_update_object(
     :param filters: Словарь фильтров для идентификации объекта.
     :return: Созданный или обновлённый объект, либо None при ошибке.
     """
-    defaults = defaults or {}
     async with async_session_factory() as session:
         try:
             result = await session.execute(select(model).filter_by(**filters))
@@ -125,3 +126,19 @@ async def create_or_update_object(
             # Логируйте или обрабатывайте ошибку по необходимости
             print(f"[create_or_update_object] DB Error: {e}")
             return None
+
+
+async def get_objects_by_where(
+    async_session_factory: sessionmaker,
+    model: Type[T],
+    *where_conditions
+) -> List[T]:
+    async with async_session_factory() as session:
+        try:
+            stmt = select(model).where(*where_conditions)
+            result = await session.execute(stmt)
+            return result.scalars().all()
+        except Exception as e:
+            await session.rollback()
+            print(f"[get_objects_by_where] DB Error: {e}")
+            return []
