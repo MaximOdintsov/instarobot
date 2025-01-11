@@ -13,7 +13,7 @@ from robot.helpers.utils import (
     POST_VALUE,
     ACCOUNT_VALUE
 )
-from robot.database.orm import  async_session, create_or_update_object, get_object_by_filter, get_objects_by_filter
+from robot.database.orm import  async_session, create_or_update_object, get_objects_by_filter
 from robot.helpers.excel import write_excel
 from robot.helpers.logs import capture_output_to_file
 from robot.robot import (
@@ -23,7 +23,7 @@ from robot.robot import (
     accounts_parsing,
     parsing_account_info
 )
-from robot import config
+from robot.conf import config
 from robot.ml.predicting import get_account_type
 from robot.database.models import Account, AccountType, STATUS
 
@@ -148,7 +148,7 @@ async def main(max_scrolls: int):
 
         # Закрываем драйвер и уходим в сон
         close_driver(driver=driver)
-        sleep_time = random.randrange(10, 60)
+        sleep_time = random.randrange(1200, 3600)
         print(f"Сон {sleep_time} секунд...")
         time.sleep(sleep_time)
 

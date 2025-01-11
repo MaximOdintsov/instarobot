@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import sessionmaker
 
-from robot import config
-from robot.database.models import Base, Account, STATUS, AccountType
+from robot.conf import config
+from robot.database.models import Base
 
 # Определяем универсальный тип T, привязанный к моделям (наследникам Base).
 T = TypeVar('T', bound=Base)
@@ -125,46 +125,3 @@ async def create_or_update_object(
             # Логируйте или обрабатывайте ошибку по необходимости
             print(f"[create_or_update_object] DB Error: {e}")
             return None
-
-# --- Примеры использования для модели Account ---
-
-# async def create_or_update_account(
-#     async_session_factory: sessionmaker[AsyncSession],
-#     account_link: str,
-#     **kwargs: Any
-# ) -> Optional[Account]:
-#     """
-#     Создать или обновить аккаунт (Account).
-#     Если аккаунт с указанной ссылкой уже существует, он будет обновлён,
-#     иначе будет создан новый.
-#
-#     :param async_session_factory: Фабрика асинхронных сессий.
-#     :param account_link: Ссылка на аккаунт (уникальное поле).
-#     :param kwargs: Дополнительные поля (status, account_type, data и т.д.).
-#     :return: Созданный или обновлённый объект Account, либо None при ошибке.
-#     """
-#     return await create_or_update_object(
-#         async_session_factory,
-#         Account,
-#         defaults=kwargs,
-#         link=account_link
-#     )
-#
-#
-# async def get_accounts_by_status(
-#     async_session_factory: sessionmaker[AsyncSession],
-#     status: STATUS
-# ) -> List[Account]:
-#     """
-#     Получить список аккаунтов с заданным статусом.
-#
-#     :param async_session_factory: Фабрика асинхронных сессий.
-#     :param status: Значение статуса, по которому будет осуществлён поиск.
-#     :return: Список объектов Account (может быть пустым).
-#     """
-#     return await get_objects_by_filter(
-#         async_session_factory,
-#         Account,
-#         status=status
-#     )
-

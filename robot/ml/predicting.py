@@ -2,7 +2,7 @@ import joblib
 import pandas as pd
 import numpy as np
 from robot.database.models import AccountType
-from robot import config
+from robot.conf import config
 
 
 def get_account_type(data: pd.DataFrame, threshold: float = 0.8) -> AccountType:

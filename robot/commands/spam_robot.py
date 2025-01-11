@@ -7,7 +7,7 @@ from robot.helpers.selenium_management import start_driver, close_driver
 from robot.helpers.utils import validate_instagram_url, ACCOUNT_VALUE
 from robot.helpers.logs import capture_output_to_file
 from robot.robot import auth, account_follow, account_send_message, account_get_post_links, account_send_comment
-from robot import config
+from robot.conf import config
 
 
 def main(links_num, is_follow, is_message, is_comment):

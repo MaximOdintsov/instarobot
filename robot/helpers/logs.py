@@ -3,7 +3,7 @@ import os
 import traceback
 from functools import wraps
 from datetime import datetime, date
-from robot import config
+from robot.conf import config
 
 
 def capture_output_to_file(command_name: str):
