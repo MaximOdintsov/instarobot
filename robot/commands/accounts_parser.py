@@ -15,7 +15,6 @@ from robot.helpers.utils import (
 )
 from robot.database.models import Account, AccountType, STATUS
 from robot.database.orm import  async_session, create_or_update_object, get_objects_by_filter
-from robot.helpers.excel import write_excel
 from robot.helpers.logs import capture_output_to_file
 from robot.robot import (
     auth,
@@ -151,23 +150,6 @@ async def main(max_scrolls: int):
         sleep_time = random.randrange(1200, 3600)
         print(f"Сон {sleep_time} секунд...")
         time.sleep(sleep_time)
-
-    # Все аккаунты со статусом READY → выгружаем в Excel
-    accounts = await get_objects_by_filter(
-        async_session_factory=async_session,
-        model=Account,
-        filters={'status': STATUS.READY}
-    )
-    write_excel(accounts=accounts, out_path=config.INSTA_ACCOUNTS_DATA_PATH)
-
-    # Меняем статус на SENT
-    for account in accounts:
-        await create_or_update_object(
-            async_session_factory=async_session,
-            model=Account,
-            filters={'id': account.id},
-            defaults={'status': STATUS.SENT}
-        )
 
 
 @click.option("--max-scrolls", default=2, help="Количество прокруток страницы вниз при парсинге постов")
