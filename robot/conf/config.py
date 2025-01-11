@@ -31,3 +31,11 @@ ACCOUNT_BREAK_MAX_TIME = 10
 # Интервал после каждого действия (подписка, отправка сообщения, отправка комментария)
 ACTION_BREAK_MIN_TIME = 5
 ACTION_BREAK_MAX_TIME = 10
+
+
+# GOOGLE TABLES
+GOOGLE_API_TOKEN_PATH = ''
+GOOGLE_TABLE_NAME = ''
+GOOGLE_WORKSHEET_NAME = ''
+UPDATE_ERROR_LOGS_PATH = 'data/logs/update_db_error.log'
+
