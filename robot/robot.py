@@ -105,7 +105,7 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
 
 
 ##################################
-### Парсинг ссылок на аккаунты ###
+### Парсинг ссылок на аккаунты из поста
 ##################################
 def accounts_parsing(driver: webdriver, post_link: str) -> list:
     """
@@ -114,19 +114,6 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
     find_links = False
     open_link(driver=driver, link=post_link)
     time.sleep(random.randrange(2, 4))
-
-    # Поиск одного аккаунта в посте
-    accounts_parent = get_wait_element(
-        driver=driver,
-        by=By.XPATH,
-        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div[1]',
-        delay=3,
-        attempts=1,
-        is_error=False
-    )
-    if accounts_parent:
-        print('Найдено в "Поиск одного аккаунта в посте"')
-        find_links = True
 
     # Поиск "ещё" в указанных аккаунтах поста
     if find_links is False:
@@ -140,6 +127,7 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
         )
         if modal_accounts_element and 'ещё' in modal_accounts_element.text:
             modal_accounts_element.click()  # Открытие модального окна со ссылками на аккаунты
+            print('Открыл модальное окно с соавторами!')
             accounts_parent = get_wait_element(
                 driver=driver,
                 by=By.XPATH,
@@ -165,6 +153,20 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
         )
         if accounts_parent:
             print('Найдено в "Поиск двух указанных аккаунтов в посте"')
+            find_links = True
+
+    if find_links is False:
+        # Поиск одного аккаунта в посте
+        accounts_parent = get_wait_element(
+            driver=driver,
+            by=By.XPATH,
+            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div[1]',
+            delay=3,
+            attempts=1,
+            is_error=False
+        )
+        if accounts_parent:
+            print('Найдено в "Поиск одного аккаунта в посте"')
             find_links = True
 
     # Поиск ссылок на аккаунты из родительского элемента
