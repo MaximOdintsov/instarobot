@@ -12,9 +12,9 @@ from robot.helpers.selenium_management import open_link, get_wait_element, get_w
 from robot.helpers.utils import extract_original_link, parse_activity_data
 
 
-###################
-### Авторизация ###
-###################
+####################
+### Авторизация
+####################
 def auth(driver: webdriver, username: str, password: str):
     open_link(driver=driver, link="https://www.instagram.com/")
     time.sleep(random.randrange(1, 3))
@@ -49,9 +49,9 @@ def auth(driver: webdriver, username: str, password: str):
     return True
 
 
-###############################
-### Парсинг ссылок на посты ###
-###############################
+####################
+### Парсинг ссылок на посты
+####################
 def turn_to_posts_page(driver: webdriver, query: str):
     """
     Переход на страницу с постами
@@ -104,9 +104,9 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
     return post_links
 
 
-##################################
+####################
 ### Парсинг ссылок на аккаунты из поста
-##################################
+####################
 def accounts_parsing(driver: webdriver, post_link: str) -> list:
     """
     Функция для парсинга аккаунтов из поста
@@ -141,33 +141,34 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
                 print('Найдено в "Поиск "ещё" в указанных аккаунтах поста"')
                 find_links = True
 
-    # Поиск двух указанных аккаунтов в посте
+    # Поиск одного или двух указанных аккаунтов в посте
     if find_links is False:
         accounts_parent = get_wait_element(
             driver=driver,
             by=By.XPATH,
             searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div',
-            delay=random.randrange(2, 3),
+                        #   '/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]'
+            delay=5,
             attempts=1,
             is_error=False
         )
         if accounts_parent:
-            print('Найдено в "Поиск двух указанных аккаунтов в посте"')
+            print('Найдено в "Поиск одного или двух указанных аккаунтов в посте"')
             find_links = True
 
-    if find_links is False:
-        # Поиск одного аккаунта в посте
-        accounts_parent = get_wait_element(
-            driver=driver,
-            by=By.XPATH,
-            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div[1]',
-            delay=3,
-            attempts=1,
-            is_error=False
-        )
-        if accounts_parent:
-            print('Найдено в "Поиск одного аккаунта в посте"')
-            find_links = True
+    # if find_links is False:  # FIXME это наверное не нужно - протестить
+    #     # Поиск одного аккаунта в посте
+    #     accounts_parent = get_wait_element(
+    #         driver=driver,
+    #         by=By.XPATH,
+    #         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div[1]',
+    #         delay=3,
+    #         attempts=1,
+    #         is_error=False
+    #     )
+    #     if accounts_parent:
+    #         print('Найдено в "Поиск одного аккаунта в посте"')
+    #         find_links = True
 
     # Поиск ссылок на аккаунты из родительского элемента
     if find_links is True:
@@ -178,9 +179,9 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
     return []
 
 
-######################################
-### Парсинг информации об аккаунте ###
-######################################
+####################
+### Парсинг информации об аккаунте
+####################
 def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     """
     Парсинг основной информации об аккаунте
@@ -299,9 +300,9 @@ def account_get_post_links(driver: webdriver, account_link: str) -> list:
     return post_links
 
 
-###################################
-### Взаимодействие с аккаунтами ###
-###################################
+####################
+### Взаимодействие с аккаунтами
+####################
 def account_follow(driver: webdriver, account_link: str) -> bool:
     """
     Подписка на аккаунт
