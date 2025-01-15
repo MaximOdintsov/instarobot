@@ -193,36 +193,32 @@ async def main():
     worksheet = gc.open(config.GOOGLE_TABLE_NAME).worksheet(config.GOOGLE_WORKSHEET_NAME)
     list_of_dicts = worksheet.get_all_records()
     
+    updated_count = 0
     for idx, row in enumerate(list_of_dicts):
         idx += 1
-        await update_account_from_table(idx, row)
-    print(f'Данные выгружены из таблицы {config.GOOGLE_TABLE_NAME} и записаны в БД')
+        updated = await update_account_from_table(idx, row)
+        if updated:
+            updated_count += 1
+    print(f'{updated_count} аккаунтов обновлено из таблицы {config.GOOGLE_TABLE_NAME}!')
 
     # Запись данных в таблицу
     accounts = await get_objects_by_where(
         async_session,
         Account,
-        Account.status.in_([STATUS.READY, STATUS.SENT, STATUS.VALIDATED])
+        Account.status.in_([STATUS.READY])
     )
     data_rows = await get_data_for_table(accounts)
     numpy_array = np.array(data_rows, dtype=object)
-    worksheet.update(numpy_array.tolist(), 'A2')  # Заполнение начинается с ячейки A2
+    worksheet.append_rows(numpy_array.tolist(), value_input_option='USER_ENTERED')  # Добавление новых строк
     print(f'Данные успешно загружены в таблицу {config.GOOGLE_TABLE_NAME}')
-
 
     # Применение стилей к таблице
     values = worksheet.get_all_values()
     style_requests = get_style_requests(values=values, worksheet_id=worksheet.id)
     worksheet.spreadsheet.batch_update(body={"requests": style_requests})
     print(f'Стили успешно применены к таблице {config.GOOGLE_TABLE_NAME}')
-    
-    
+
     # Меняем статус на "Отправлено на верификацию"
-    accounts = await get_objects_by_where(
-        async_session,
-        Account,
-        Account.status.in_([STATUS.READY])
-    )
     for account in accounts:
         await create_or_update_object(
             async_session_factory=async_session,
@@ -232,7 +228,7 @@ async def main():
         )
 
 
-@click.command(name="update_google_table")
-@capture_output_to_file("update_google_table")
+@click.command(name="google_table")
+@capture_output_to_file("google_table")
 def run():
     asyncio.run(main())
