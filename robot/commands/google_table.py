@@ -7,7 +7,7 @@ import numpy as np
 from robot.helpers.async_utils import url_shortening_async
 from robot.helpers.logs import capture_output_to_file
 from robot.database.models import Account, AccountType, STATUS
-from robot.database.orm import  async_session, create_or_update_object, get_object_by_filter, get_objects_by_where
+from robot.database.orm import async_session, create_or_update_object, get_object_by_filter, get_objects_by_where
 from robot.conf import config
 
 
@@ -42,6 +42,24 @@ async def update_account_from_table(idx: int, row: dict):
         model=Account,
         filters={'link': account_link}
     )
+
+    # Создание нового аккаунта
+    if not account:  # FIXME парсить и остальные данные из таблицы
+        data = {'verified_account_type': verified_account_type.value,
+                'account_link': account_link}
+        account = await create_or_update_object(
+            async_session_factory=async_session,
+            model=Account,
+            filters={'link': account_link},
+            defaults={
+                'link': account_link,
+                'data': data,
+                'account_type': verified_account_type,
+                'status': STATUS.VALIDATED
+            }
+        )
+        print(f'\nСоздал новый аккаунт в БД из таблицы: "{account.link}"!')
+        return True
 
     # Обновление данных в БД
     if not account.data.get('verified_account_type', ''):
@@ -128,7 +146,6 @@ async def get_data_for_table(accounts) -> list:
         return data_rows
 
 
-
 ################################
 ### Получение данных для применения стилей Google Sheets
 ################################
@@ -191,7 +208,7 @@ async def main():
     # Получение данных из таблицы и обновление в БД
     gc = gspread.service_account(filename=config.GOOGLE_API_TOKEN_PATH)
     worksheet = gc.open(config.GOOGLE_TABLE_NAME).worksheet(config.GOOGLE_WORKSHEET_NAME)
-    list_of_dicts = worksheet.get_all_records()
+    list_of_dicts = worksheet.get_all_records(expected_headers=[''])
     
     updated_count = 0
     for idx, row in enumerate(list_of_dicts):
