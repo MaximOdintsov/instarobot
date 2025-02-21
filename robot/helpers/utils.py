@@ -57,9 +57,10 @@ def extract_emails(text: str) -> list:
     :param text: Строка, содержащая текст для анализа.
     :return: Список найденных email-адресов.
     """
-    email_pattern = r'[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}'
-    return re.findall(email_pattern, text)
-
+    if text:
+        email_pattern = r'[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}'
+        return re.findall(email_pattern, text)
+    return []
 
 POST_VALUE = 1
 ACCOUNT_VALUE = 2
@@ -88,6 +89,6 @@ def validate_instagram_url(url: str) -> int:
     if post_pattern.match(url):
         return POST_VALUE
     elif account_pattern.match(url):
-        return ACCOUNT_VALUE
-    else:
-        return INVALID_VALUE
+        if 'reels' not in url:
+            return ACCOUNT_VALUE
+    return INVALID_VALUE
