@@ -116,9 +116,9 @@ async def process_single_account(account, session) -> list:
     )
 
     row = [
-        account.data.get('account_link', ''),
+        account.link,
         account.data.get('description', ''),
-        account.data.get('predicted_account_type', AccountType.UNKNOWN),
+        account.data.get('predicted_account_type', AccountType.UNKNOWN.value),
         account.data.get('verified_account_type', ''),
         "\n".join(emails),
         "\n".join(shortened_links_description),
@@ -129,6 +129,7 @@ async def process_single_account(account, session) -> list:
         account.data.get('hashtag', ''),
         str(account.create_datetime),
     ]
+    print(row)
     return row
 
 
@@ -222,10 +223,11 @@ async def main():
     accounts = await get_objects_by_where(
         async_session,
         Account,
-        Account.status.in_([STATUS.READY])
+        Account.status.in_([STATUS.PARSING])
     )
     data_rows = await get_data_for_table(accounts)
     numpy_array = np.array(data_rows, dtype=object)
+    print(f'numpy_array: {numpy_array}')
     worksheet.append_rows(numpy_array.tolist(), value_input_option='USER_ENTERED')  # Добавление новых строк
     print(f'Данные успешно загружены в таблицу {settings.GOOGLE_TABLE_NAME}')
 

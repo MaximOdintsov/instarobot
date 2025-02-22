@@ -36,15 +36,18 @@ def auth(driver: webdriver, username: str, password: str):
     )
     password_element.send_keys(password)
 
-    enter_element = get_wait_element(
-        driver=driver,
-        by=By.XPATH,
-        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div/div[3]/button/div',
-        sleep=1,
-        delay=5,
-    )
-    enter_element.click() 
-    time.sleep(random.randrange(10, 13))
+    # enter_element = get_wait_element(
+    #     driver=driver,
+    #     by=By.XPATH,
+    #     searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div/div[3]/button/div',
+    #     sleep=1,
+    #     delay=5,
+    # )
+    # enter_element.click()
+    time.sleep(random.randrange(3, 6))
+
+    driver.switch_to.active_element.send_keys(Keys.ENTER)
+    time.sleep(random.randrange(15, 20))
     
     return True
 
@@ -82,7 +85,7 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
         posts_parent_elelemt = get_wait_element(
             driver=driver,
             by=By.XPATH,
-            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[2]',
+            searched_elem='/html/body',
             sleep=5,
             delay=20,
             attempts=1,
@@ -143,15 +146,32 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
 
     # Поиск одного или двух указанных аккаунтов в посте
     if find_links is False:
+        # try:
+        #     accounts_parent = get_wait_element(
+        #         driver=driver,
+        #         by=By.XPATH,
+        #         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div',
+        #         delay=5,
+        #         attempts=1,
+        #         is_error=True
+        #     )
+        # except Exception:
+        #     accounts_parent = get_wait_element(
+        #         driver=driver,
+        #         by=By.XPATH,
+        #         searched_elem='/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/article/div[1]/header/div[2]/div[1]/div[1]/div/div/',
+        #         delay=5,
+        #         attempts=1,
+        #         is_error=False
+        #     )
         accounts_parent = get_wait_element(
-            driver=driver,
-            by=By.XPATH,
-            searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div',
-                        #   '/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]'
-            delay=5,
-            attempts=1,
-            is_error=False
-        )
+                driver=driver,
+                by=By.XPATH,
+                searched_elem='/html/body',
+                delay=5,
+                attempts=1,
+                is_error=False
+            )
         if accounts_parent:
             print('Найдено в "Поиск одного или двух указанных аккаунтов в посте"')
             find_links = True
@@ -172,11 +192,13 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
 
     # Поиск ссылок на аккаунты из родительского элемента
     if find_links is True:
-        link_elements = get_link_elements(accounts_parent)
+        link_elements = get_link_elements(driver)
         account_links = get_links(link_elements=link_elements)
         print(f'Найдены ссылки: {account_links}')
         return account_links
-    return []
+    else:
+        print(f'Ссылка(и) не найдена(ы)')
+        return []
 
 
 ####################
