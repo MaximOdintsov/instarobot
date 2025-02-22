@@ -1,7 +1,6 @@
 #!.venv/bin/python
 
 import click
-import os
 import importlib
 import asyncio
 from pathlib import Path
