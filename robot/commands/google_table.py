@@ -129,7 +129,6 @@ async def process_single_account(account, session) -> list:
         account.data.get('hashtag', ''),
         str(account.create_datetime),
     ]
-    print(row)
     return row
 
 
@@ -201,7 +200,6 @@ def get_style_requests(values: list, worksheet_id: int) -> list:
     return requests
 
 
-
 ################################
 ### Запуск основной функции
 ################################
@@ -243,7 +241,7 @@ async def main():
             async_session_factory=async_session,
             model=Account,
             filters={'id': account.id},
-            defaults={'status': STATUS.SENT}
+            defaults={'status': STATUS.READY}
         )
 
 

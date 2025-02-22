@@ -1,9 +1,11 @@
 import yaml
 
+
 # DATABASE
 DB_PATH = "data/db/instagram.db"
 SQLALCHEMY_URL = f"sqlite:///{DB_PATH}"
 DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
+
 
 # MAIN PATHS
 LOGS_ROOT = 'data/logs'
@@ -26,16 +28,22 @@ GOOGLE_TABLE_NAME = ''
 GOOGLE_WORKSHEET_NAME = ''
 UPDATE_ERROR_LOGS_PATH = 'data/logs/update_db_error.log'
 
+
 # RABBITMQ
+RABBITMQ_USE = False
+RABBITMQ_HOST = ''
+RABBITMQ_PORT = ''
 QUEUE_POST_LINKS = ''
 QUEUE_ACCOUNT_LINKS = ''
 QUEUE_ACCOUNT_DATA = ''
+
 
 # AUTH DATA: List[dict, dict]
 AUTH_LIST_POST_LINKS = []
 AUTH_LIST_POST_DATA_PARSER = []
 AUTH_LIST_ACCOUNT_DATA_PARSER = []
 AUTH_LIST_SPAM_ROBOT = []
+
 
 # FOR ROBOTS
 COMMENT_TEMPLATES = []
@@ -44,14 +52,22 @@ QUERIES = []
 ACCOUNT_LINKS_PATH = ''
 
 
-# Переопределение настроек
-file_path = 'robot.yaml'
+# Переопределение дефолтных настроек
+ROBOT_SETTINGS_PATH = 'robot.yaml'
 try:
-    with open(file_path, 'r', encoding='utf-8') as f:
-        print(f'Переопределяю настройки из файла {file_path}')
+    with open(ROBOT_SETTINGS_PATH, 'r', encoding='utf-8') as f:
+        print(f'Переопределяю настройки из файла {ROBOT_SETTINGS_PATH}')
         # Используем safe_load для безопасности
         secrets = yaml.safe_load(f)
         for key, value in secrets.items():
             globals()[key] = value
 except FileNotFoundError:
-    print(f'Файл {file_path} не найден. Используются настройки по умолчанию.')
+    print(f'Файл {ROBOT_SETTINGS_PATH} не найден. Используются настройки по умолчанию.')
+
+
+if RABBITMQ_USE is True:
+    from pika import ConnectionParameters
+    RABBITMQ_CONNECTION = ConnectionParameters(
+        host=RABBITMQ_HOST,
+        port=RABBITMQ_PORT,
+    )
