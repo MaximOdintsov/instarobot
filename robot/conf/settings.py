@@ -5,21 +5,10 @@ DB_PATH = "data/db/instagram.db"
 SQLALCHEMY_URL = f"sqlite:///{DB_PATH}"
 DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
 
-# PATHS
+# MAIN PATHS
 LOGS_ROOT = 'data/logs'
 COMMANDS_ROOT = 'robot/commands'
-
-#AUTH_DATA_PATH = 'data/in/auth_data.json'
-QUERIES_PATH = 'data/in/queries.json'
-INSTA_ACCOUNTS_DATA_PATH = 'data/out/insta_accounts.xlsx'
-POST_LINKS_PATH = 'data/in/post_links.json'
-MESSAGE_TEMPLATES_PATH = 'data/in/message_templates.json'
-COMMENT_TEMPLATES_PATH = 'data/in/comment_templates.json'
-ACCOUNT_LINKS_PATH = 'data/in/account_links.txt'
-
-# MODELS
-ACCOUNT_TYPE_MODEL_PATH = 'data/modеls/account_type_1.pkl'
-
+ACCOUNT_TYPE_MODEL_PATH = 'robot/ml/models/account_type_1.pkl'
 
 # Сон после обработки аккаунта
 ACCOUNT_BREAK_MIN_TIME = 5
@@ -46,6 +35,13 @@ QUEUE_ACCOUNT_DATA = ''
 AUTH_LIST_POST_LINKS = []
 AUTH_LIST_POST_DATA_PARSER = []
 AUTH_LIST_ACCOUNT_DATA_PARSER = []
+AUTH_LIST_SPAM_ROBOT = []
+
+# FOR ROBOTS
+COMMENT_TEMPLATES = []
+MESSAGE_TEMPLATES = []
+QUERIES = []
+ACCOUNT_LINKS_PATH = ''
 
 
 # Переопределение настроек
