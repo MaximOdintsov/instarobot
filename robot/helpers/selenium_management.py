@@ -42,6 +42,11 @@ def open_link(driver: webdriver, link, attempts: int = 3, logs: bool = True) -> 
         raise Exception(f'Ссылка "{link}" недоступна или не найдена.')
 
 
+def get_wait_driver(driver: webdriver, delay: int = 10):
+    return WebDriverWait(driver, delay)
+    
+
+
 def check_page_opening(url, driver=None):
     """
     Проверяет, что страница открылась корректно, используя HTTP-запрос для проверки статуса.
@@ -51,14 +56,6 @@ def check_page_opening(url, driver=None):
     :return: bool, True, если страница открыта корректно, иначе False.
     """
     try:
-        # Проверяем HTTP-статус страницы
-        response = requests.get(url, timeout=10)
-        if 400 <= response.status_code < 600:
-            print(f"Ошибка HTTP-кода: {response.status_code}. Страница недоступна.")
-            return False
-        else:
-            print(f"HTTP-код {response.status_code}. Страница доступна.")
-
         # Если драйвер не передан, создаём новый
         if driver is None:
             driver = webdriver.Chrome()
@@ -71,7 +68,6 @@ def check_page_opening(url, driver=None):
             print(f"Внимание: редирект на {driver.current_url}.")
         else:
             print("URL совпадает, страница открыта корректно.")
-
         return True
     except requests.exceptions.RequestException as e:
         print(f"Ошибка HTTP-запроса: {e}")
@@ -86,7 +82,8 @@ def get_wait_element(driver: webdriver, by: By, searched_elem: str, delay: int =
     for attempt in range(attempts):
         try:
             time.sleep(sleep)
-            element = WebDriverWait(driver, delay).until(
+            wait_driver = get_wait_driver(driver, delay)
+            element = wait_driver.until(
                 EC.presence_of_element_located((by, searched_elem))
             )
             if element.is_enabled():
@@ -111,8 +108,9 @@ def get_wait_elements(driver: webdriver, by: By, searched_elem: str, delay: int 
     for attempt in range(attempts):
         try:
             time.sleep(sleep)
-            return WebDriverWait(driver, delay).until(
-                EC.presence_of_all_elements_located((by, searched_elem))
+            wait_driver = get_wait_driver(driver, delay)
+            return wait_driver.until(
+                EC.presence_of_all_elements_located(by, searched_elem)
             )
         except Exception as e:
             if logs:
