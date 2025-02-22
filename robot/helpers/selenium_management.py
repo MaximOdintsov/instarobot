@@ -46,7 +46,6 @@ def get_wait_driver(driver: webdriver, delay: int = 10):
     return WebDriverWait(driver, delay)
     
 
-
 def check_page_opening(url, driver=None):
     """
     Проверяет, что страница открылась корректно, используя HTTP-запрос для проверки статуса.
@@ -110,7 +109,7 @@ def get_wait_elements(driver: webdriver, by: By, searched_elem: str, delay: int 
             time.sleep(sleep)
             wait_driver = get_wait_driver(driver, delay)
             return wait_driver.until(
-                EC.presence_of_all_elements_located(by, searched_elem)
+                EC.presence_of_all_elements_located((by, searched_elem))
             )
         except Exception as e:
             if logs:
@@ -155,4 +154,4 @@ def get_links(link_elements: List[WebElement]) -> list:
         href = link_element.get_attribute("href")
         if href:
             link_list.add(href)
-    return list(link_list)
+    return list(link_list) or []
