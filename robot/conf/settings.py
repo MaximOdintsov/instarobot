@@ -1,6 +1,5 @@
 import yaml
 
-
 # DATABASE
 DB_PATH = "data/db/instagram.db"
 SQLALCHEMY_URL = f"sqlite:///{DB_PATH}"
@@ -9,7 +8,7 @@ DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
 
 # MAIN PATHS
 LOGS_ROOT = 'data/logs'
-COMMANDS_ROOT = 'robot/commands'
+COMMANDS_ROOT = 'robot/management/commands'
 ACCOUNT_TYPE_MODEL_PATH = 'robot/ml/models/account_type_1.pkl'
 
 # Сон после обработки аккаунта
@@ -33,6 +32,7 @@ UPDATE_ERROR_LOGS_PATH = 'data/logs/update_db_error.log'
 RABBITMQ_USE = False
 RABBITMQ_HOST = ''
 RABBITMQ_PORT = ''
+RABBITMQ_SECRETS = 'rabbitmq/secrets.env'
 QUEUE_POST_LINKS = ''
 QUEUE_ACCOUNT_LINKS = ''
 QUEUE_ACCOUNT_DATA = ''
@@ -65,9 +65,19 @@ except FileNotFoundError:
     print(f'Файл {ROBOT_SETTINGS_PATH} не найден. Используются настройки по умолчанию.')
 
 
+
 if RABBITMQ_USE is True:
-    from pika import ConnectionParameters
+    from pika import ConnectionParameters, PlainCredentials
+    import os
+    from dotenv import load_dotenv
+
+    load_dotenv(dotenv_path=RABBITMQ_SECRETS)
+    RABBITMQ_DEFAULT_USER = os.getenv("RABBITMQ_DEFAULT_USER")
+    RABBITMQ_DEFAULT_PASS = os.getenv("RABBITMQ_DEFAULT_PASS")
     RABBITMQ_CONNECTION = ConnectionParameters(
         host=RABBITMQ_HOST,
         port=RABBITMQ_PORT,
+        credentials=PlainCredentials(username=RABBITMQ_DEFAULT_USER, password=RABBITMQ_DEFAULT_PASS)
     )
+
+
