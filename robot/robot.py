@@ -16,40 +16,79 @@ from robot.helpers.utils import extract_original_link, parse_activity_data
 ### Авторизация
 ####################
 def auth(driver: webdriver, username: str, password: str):
-    open_link(driver=driver, link="https://www.instagram.com/")
-    time.sleep(random.randrange(1, 3))
+    open_link(driver=driver, link="https://www.instagram.com/accounts/login/#")
+
+    # Логин
     username_element = get_wait_element(
         driver=driver,
         by=By.NAME,
         searched_elem='username',
-        sleep=2,
-        delay=5,
+        delay=10,
     )
+    time.sleep(random.randrange(1, 3))
     username_element.send_keys(username)
 
+    # Пароль
     password_element = get_wait_element(
         driver=driver,
         by=By.NAME,
         searched_elem='password',
-        sleep=2,
         delay=5,
     )
+    time.sleep(random.randrange(1, 3))
     password_element.send_keys(password)
 
-    # enter_element = get_wait_element(
-    #     driver=driver,
-    #     by=By.XPATH,
-    #     searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div/div[3]/button/div',
-    #     sleep=1,
-    #     delay=5,
-    # )
-    # enter_element.click()
-    time.sleep(random.randrange(3, 6))
-
+    # Войти
     driver.switch_to.active_element.send_keys(Keys.ENTER)
-    time.sleep(random.randrange(15, 20))
-    
-    return True
+
+    # Страница "Проверьте свою почту"
+    check_your_email_element = get_wait_element(
+            driver=driver,
+            by=By.XPATH,
+            searched_elem="//*[normalize-space(text())='Проверьте свою почту']",
+            attempts=1,
+            delay=5,
+            is_error=False
+        )
+    if check_your_email_element:
+        code_element = get_wait_element(  # Поле с кодом подтверждения
+            driver=driver,
+            by=By.NAME,
+            searched_elem="email",
+            attempts=1,
+            delay=5,
+        )
+        code_text = input(f'Проверьте почту {username}. Введите код от инстаграмма:')
+        code_element.send_keys(code_text) 
+        driver.switch_to.active_element.send_keys(Keys.ENTER)  # Отправить код подтверждения  
+
+    # Сохранить данные для входа в Instagram?
+    save_data_element = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem="//*[contains(., 'Сохранить данные для входа')]",
+        delay=10,
+        attempts=1,
+        is_error=False
+    )
+    if save_data_element:
+        time.sleep(random.randrange(1, 3))
+        driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+
+    # Проверка входа
+    try:
+        get_wait_element(
+            driver=driver,
+            by=By.XPATH,
+            searched_elem="//*[normalize-space(text())='Главная']",
+            delay=10,
+        )
+        print("Вход выполнен успешно, доступ получен!")
+        return True
+    except Exception:
+        print("Не удалось выполнить вход или страница не загрузилась корректно.")
+        return False
+
 
 
 ####################
