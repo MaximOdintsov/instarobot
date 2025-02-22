@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from robot.database.models import Base
-from robot.conf.config import SQLALCHEMY_URL
+from robot.conf.settings import SQLALCHEMY_URL
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

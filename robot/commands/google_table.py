@@ -8,7 +8,7 @@ from robot.helpers.async_utils import url_shortening_async
 from robot.helpers.logs import capture_output_to_file
 from robot.database.models import Account, AccountType, STATUS
 from robot.database.orm import async_session, create_or_update_object, get_object_by_filter, get_objects_by_where
-from robot.conf import config
+from robot.conf import settings
 
 
 ################################
@@ -29,7 +29,7 @@ async def update_account_from_table(idx: int, row: dict):
             # verified_account_type = verified_account_type
         except ValueError:
             log = f'Ошибка: Неправильное название типа аккаунта: "{verified_account_type}"\nИндекс строки: {idx}.\nДанные: {row}'
-            with open(config.UPDATE_ERROR_LOGS_PATH, 'a') as f:
+            with open(settings.UPDATE_ERROR_LOGS_PATH, 'a') as f:
                 f.write(log)
             print(log)
             return False
@@ -206,9 +206,9 @@ def get_style_requests(values: list, worksheet_id: int) -> list:
 ################################
 async def main():
     # Получение данных из таблицы и обновление в БД
-    gc = gspread.service_account(filename=config.GOOGLE_API_TOKEN_PATH)
-    worksheet = gc.open(config.GOOGLE_TABLE_NAME).worksheet(config.GOOGLE_WORKSHEET_NAME)
-    list_of_dicts = worksheet.get_all_records(expected_headers=[''])
+    gc = gspread.service_account(filename=settings.GOOGLE_API_TOKEN_PATH)
+    worksheet = gc.open(settings.GOOGLE_TABLE_NAME).worksheet(settings.GOOGLE_WORKSHEET_NAME)
+    list_of_dicts = worksheet.get_all_records()
     
     updated_count = 0
     for idx, row in enumerate(list_of_dicts):
@@ -216,9 +216,9 @@ async def main():
         updated = await update_account_from_table(idx, row)
         if updated:
             updated_count += 1
-    print(f'{updated_count} аккаунтов обновлено из таблицы {config.GOOGLE_TABLE_NAME}!')
+    print(f'{updated_count} аккаунтов обновлено из таблицы {settings.GOOGLE_TABLE_NAME}!')
 
-    # Запись данных в таблицу
+    # Запись данных из БД в таблицу
     accounts = await get_objects_by_where(
         async_session,
         Account,
@@ -227,13 +227,13 @@ async def main():
     data_rows = await get_data_for_table(accounts)
     numpy_array = np.array(data_rows, dtype=object)
     worksheet.append_rows(numpy_array.tolist(), value_input_option='USER_ENTERED')  # Добавление новых строк
-    print(f'Данные успешно загружены в таблицу {config.GOOGLE_TABLE_NAME}')
+    print(f'Данные успешно загружены в таблицу {settings.GOOGLE_TABLE_NAME}')
 
     # Применение стилей к таблице
     values = worksheet.get_all_values()
     style_requests = get_style_requests(values=values, worksheet_id=worksheet.id)
     worksheet.spreadsheet.batch_update(body={"requests": style_requests})
-    print(f'Стили успешно применены к таблице {config.GOOGLE_TABLE_NAME}')
+    print(f'Стили успешно применены к таблице {settings.GOOGLE_TABLE_NAME}')
 
     # Меняем статус на "Отправлено на верификацию"
     for account in accounts:

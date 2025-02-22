@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import sessionmaker
 
-from robot.conf import config
+from robot.conf import settings
 from robot.database.models import Base
 
 
@@ -19,7 +19,7 @@ T = TypeVar('T', bound=Base)
 
 # Асинхронный движок (engine).
 async_engine: AsyncEngine = create_async_engine(
-    config.DATABASE_URL,  # sqlite+aiosqlite:///<path_to_db>
+    settings.DATABASE_URL,  # sqlite+aiosqlite:///<path_to_db>
     # echo=True  # установить в False в продакшене
 )
 

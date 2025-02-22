@@ -2,14 +2,14 @@ import joblib
 import pandas as pd
 import numpy as np
 from robot.database.models import AccountType
-from robot.conf import config
+from robot.conf import settings
 
 
 def get_account_type(data: pd.DataFrame, threshold: float = 0.8) -> AccountType:
     """
     Предсказывает и возвращает тип аккаунта
     """
-    loaded_model = joblib.load(config.ACCOUNT_TYPE_MODEL_PATH)
+    loaded_model = joblib.load(settings.ACCOUNT_TYPE_MODEL_PATH)
     
     preds = loaded_model.predict(data)  # Предсказанные классы
     probs = loaded_model.predict_proba(data)  # Вероятности классов

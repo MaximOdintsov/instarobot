@@ -7,7 +7,7 @@ from robot.helpers.selenium_management import start_driver, close_driver
 from robot.helpers.utils import validate_instagram_url, ACCOUNT_VALUE
 from robot.helpers.logs import capture_output_to_file
 from robot.robot import auth, account_follow, account_send_message, account_get_post_links, account_send_comment
-from robot.conf import config
+from robot.conf import settings
 
 
 def main(links_num, is_follow, is_message, is_comment):
@@ -18,19 +18,19 @@ def main(links_num, is_follow, is_message, is_comment):
         return
 
     # Список аккаунтов
-    with open(config.ACCOUNT_LINKS_PATH, "r", encoding="utf-8") as file:
+    with open(settings.ACCOUNT_LINKS_PATH, "r", encoding="utf-8") as file:
         all_links = file.read().split('\n')
 
     # Список сообщений
-    with open(config.MESSAGE_TEMPLATES_PATH, "r", encoding="utf-8") as file:
+    with open(settings.MESSAGE_TEMPLATES_PATH, "r", encoding="utf-8") as file:
         messages = json.load(file)
 
     # Список комментариев
-    with open(config.COMMENT_TEMPLATES_PATH, "r", encoding="utf-8") as file:
+    with open(settings.COMMENT_TEMPLATES_PATH, "r", encoding="utf-8") as file:
         comments = json.load(file)
 
     # Список логинов/паролей
-    with open(config.AUTH_DATA_PATH, "r", encoding="utf-8") as file:
+    with open(settings.AUTH_DATA_PATH, "r", encoding="utf-8") as file:
         auth_data_list = json.load(file)
 
     # Запускаем бота по очереди для каждого аккаунта из AUTH_DATA_PATH
@@ -56,23 +56,23 @@ def main(links_num, is_follow, is_message, is_comment):
             # Подписка на аккаунт
             if is_follow:
                 account_follow(driver=driver, account_link=account_link)
-                time.sleep(random.randrange(config.ACTION_BREAK_MIN_TIME, config.ACTION_BREAK_MAX_TIME))
+                time.sleep(random.randrange(settings.ACTION_BREAK_MIN_TIME, settings.ACTION_BREAK_MAX_TIME))
 
             # Отправка сообщения
             if is_message:
                 account_send_message(driver=driver, account_link=account_link, message=random.choice(messages))
-                time.sleep(random.randrange(config.ACTION_BREAK_MIN_TIME, config.ACTION_BREAK_MAX_TIME))
+                time.sleep(random.randrange(settings.ACTION_BREAK_MIN_TIME, settings.ACTION_BREAK_MAX_TIME))
 
             # Парсинг постов и отправка комментария к первому посту
             if is_comment:
                 post_links = account_get_post_links(driver=driver, account_link=account_link)
                 if post_links:
                     account_send_comment(driver=driver, post_link=random.choice(post_links), comment=random.choice(comments))
-                    time.sleep(random.randrange(config.ACTION_BREAK_MIN_TIME, config.ACTION_BREAK_MAX_TIME))
+                    time.sleep(random.randrange(settings.ACTION_BREAK_MIN_TIME, settings.ACTION_BREAK_MAX_TIME))
 
             account_counter += 1
             # Пауза между разными аккаунтами
-            time.sleep(random.randrange(config.ACCOUNT_BREAK_MIN_TIME, config.ACCOUNT_BREAK_MAX_TIME))
+            time.sleep(random.randrange(settings.ACCOUNT_BREAK_MIN_TIME, settings.ACCOUNT_BREAK_MAX_TIME))
 
         close_driver(driver=driver)
 

@@ -3,7 +3,7 @@ import os
 import traceback
 from functools import wraps
 from datetime import datetime, date
-from robot.conf import config
+from robot.conf import settings
 
 
 def capture_output_to_file(command_name: str):
@@ -112,7 +112,7 @@ def capture_output_to_file(command_name: str):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            base_dir = os.path.join(config.LOGS_ROOT, str(date.today()))
+            base_dir = os.path.join(settings.LOGS_ROOT, str(date.today()))
             os.makedirs(base_dir, exist_ok=True)
 
             out_file_path = os.path.join(base_dir, f'{command_name}.out')

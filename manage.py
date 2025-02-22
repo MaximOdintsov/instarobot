@@ -6,14 +6,14 @@ import importlib
 
 import asyncio
 from robot.database.orm import create_tables, async_engine
-from robot.conf import config
+from robot.conf import settings
 
 
 def load_commands(cli):
     """
     Автоматически загружает все команды из папки config.COMMANDS_ROOT.
     """
-    for filename in os.listdir(config.COMMANDS_ROOT):
+    for filename in os.listdir(settings.COMMANDS_ROOT):
         if filename.endswith('.py') and filename != '__init__.py':
             module_name = filename[:-3]
             module_path = f'robot.commands.{module_name}'
