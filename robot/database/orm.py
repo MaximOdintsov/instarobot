@@ -19,8 +19,12 @@ T = TypeVar('T', bound=Base)
 
 # Асинхронный движок (engine).
 async_engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,  # sqlite+aiosqlite:///<path_to_db>
-    # echo=True  # установить в False в продакшене
+    settings.DATABASE_URL,
+    echo=True,
+    pool_size=20,  # Adjust pool size based on your workload
+    max_overflow=10,  # Adjust maximum overflow connections
+    pool_recycle=3600,  # Periodically recycle connections (optional)
+    pool_pre_ping=True
 )
 
 # Фабрика асинхронных сессий.
