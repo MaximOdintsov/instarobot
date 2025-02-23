@@ -39,7 +39,7 @@ class MultiInstagramAccountDriver:
         Меняет аккаунт и авторизуется
         """
         self.current_index += 1
-        self.authenticate()
+        return self.authenticate()
 
     def authenticate(self):
         """

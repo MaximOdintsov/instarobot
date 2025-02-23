@@ -8,4 +8,6 @@ services:
     env_file:
       - secrets.env
     volumes:
-      - ../data/rabbitmq:/var/lib/rabbitmq
+      - data:/var/lib/rabbitmq
+volumes:
+  data:
