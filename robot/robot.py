@@ -1,12 +1,12 @@
 import random
 import time
-
+import pickle
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-
 
 from robot.helpers.selenium_management import open_link, get_wait_element, get_wait_elements, get_link_elements, get_links
 from robot.helpers.utils import extract_original_link, parse_activity_data
@@ -15,8 +15,9 @@ from robot.helpers.utils import extract_original_link, parse_activity_data
 ####################
 ### Авторизация
 ####################
-def auth(driver: webdriver, username: str, password: str):
-    open_link(driver=driver, link="https://www.instagram.com/accounts/login/#")
+def simple_auth(driver: webdriver, username: str, password: str):
+    open_link(driver=driver, link="https://www.instagram.com/accounts/login/")
+    print(f'Данные для входа: username: "{username}", password: "{password}"')
 
     # Логин
     username_element = get_wait_element(
@@ -51,16 +52,63 @@ def auth(driver: webdriver, username: str, password: str):
             is_error=False
         )
     if check_your_email_element:
-        code_element = get_wait_element(  # Поле с кодом подтверждения
+        print(f'Инстраграм запросил код для аккаунта "{username}". Пропускаю...')
+        return False
+
+    # if check_your_email_element:
+    #     code_element = get_wait_element(  # Поле с кодом подтверждения
+    #         driver=driver,
+    #         by=By.NAME,
+    #         searched_elem="email",
+    #         attempts=1,
+    #         delay=5,
+    #     )
+    #     code_text = input(f'Проверьте почту {username}. Введите код от инстаграмма:')
+    #     code_element.send_keys(code_text)
+    #     driver.switch_to.active_element.send_keys(Keys.ENTER)  # Отправить код подтверждения
+
+    # Сохранить данные для входа в Instagram?
+    save_data_element = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem="//*[contains(., 'Сохранить данные для входа')]",
+        delay=10,
+        attempts=1,
+        is_error=False
+    )
+    if save_data_element:
+        time.sleep(random.randrange(1, 3))
+        driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+
+    # Проверка входа
+    try:
+        get_wait_element(
             driver=driver,
-            by=By.NAME,
-            searched_elem="email",
-            attempts=1,
-            delay=5,
+            by=By.XPATH,
+            searched_elem="//*[normalize-space(text())='Главная']",
+            delay=10,
+            attempts=1
         )
-        code_text = input(f'Проверьте почту {username}. Введите код от инстаграмма:')
-        code_element.send_keys(code_text) 
-        driver.switch_to.active_element.send_keys(Keys.ENTER)  # Отправить код подтверждения  
+        print("Вход выполнен успешно, доступ получен!")
+        return True
+    except Exception:
+        print("Не удалось выполнить вход или страница не загрузилась корректно.")
+        return False
+
+
+def cookies_auth(driver: webdriver, cookie_path: str):
+    cookie_path = Path(cookie_path)
+    if not cookie_path.exists():
+        print(f'Куки по пути "{cookie_path}" не существует!')
+        return False
+    
+    open_link(driver=driver, link="https://www.instagram.com/accounts/login/#")
+    
+    with open(cookie_path, 'rb') as file:
+        cookies = pickle.load(file)
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+    driver.refresh()
 
     # Сохранить данные для входа в Instagram?
     save_data_element = get_wait_element(
@@ -90,7 +138,6 @@ def auth(driver: webdriver, username: str, password: str):
         return False
 
 
-
 ####################
 ### Парсинг ссылок на посты
 ####################
@@ -104,7 +151,7 @@ def turn_to_posts_page(driver: webdriver, query: str):
         driver=driver,
         by=By.XPATH,
         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div/div[2]/span',
-        delay=3,
+        delay=5,
         attempts=1,
         is_error=False
     )
@@ -113,37 +160,70 @@ def turn_to_posts_page(driver: webdriver, query: str):
     return True
 
 
-def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10) -> set:
+def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10) -> tuple[list, bool]:
     """
     Скроллинг страниц и поиск ссылок
     """
+    page_end = False
+
     last_height = driver.execute_script("return document.body.scrollHeight")
-    post_links = set()
-    for i in range(max_scrolls):
-        # Получение ссылок
-        posts_parent_elelemt = get_wait_element(
-            driver=driver,
-            by=By.XPATH,
-            searched_elem='/html/body',
-            sleep=5,
-            delay=20,
-            attempts=1,
-        )
-        link_elements = get_link_elements(posts_parent_elelemt)
-        new_links = get_links(link_elements=link_elements)
-        print(f'Найдены новые ссылки на посты: {new_links}')
-        post_links.update(new_links)
+    # Скролл страницы
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-        # Скролл страницы
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(wait_time)
+    # Получение ссылок
+    posts_parent_elelemt = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem='/html/body',
+        sleep=wait_time,
+        delay=20,
+        attempts=1,
+    )
+    link_elements = get_link_elements(posts_parent_elelemt)
+    new_links = get_links(link_elements=link_elements)
+    print(f'Найдены новые ссылки на посты: {new_links}')
 
-        # Проверка конца страницы
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
-    return post_links
+    # Проверка конца страницы
+    new_height = driver.execute_script("return document.body.scrollHeight")
+    if new_height == last_height:
+        page_end = True
+
+    return new_links, page_end
+
+
+
+    # last_height = driver.execute_script("return document.body.scrollHeight")
+    # post_links = set()
+
+
+
+    # for i in range(max_scrolls):
+    #     last_height = driver.execute_script("return document.body.scrollHeight")
+    #
+    #     # Получение ссылок
+    #     posts_parent_elelemt = get_wait_element(
+    #         driver=driver,
+    #         by=By.XPATH,
+    #         searched_elem='/html/body',
+    #         sleep=5,
+    #         delay=20,
+    #         attempts=1,
+    #     )
+    #     link_elements = get_link_elements(posts_parent_elelemt)
+    #     new_links = get_links(link_elements=link_elements)
+    #     print(f'Найдены новые ссылки на посты: {new_links}')
+    #     post_links.update(new_links)
+    #
+    #     # Скролл страницы
+    #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    #     time.sleep(wait_time)
+    #
+    #     # Проверка конца страницы
+    #     new_height = driver.execute_script("return document.body.scrollHeight")
+    #     if new_height == last_height:
+    #         break
+    #
+    # return post_links
 
 
 ####################

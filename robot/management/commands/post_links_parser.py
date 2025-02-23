@@ -16,7 +16,7 @@ from robot.management.base import MultiInstagramAccountDriver
 async def main(max_scrolls: int):
     # Авторизация
     account_manager = MultiInstagramAccountDriver(settings.AUTH_LIST_POST_LINKS)
-    account, driver = account_manager.authenticate()
+    driver = account_manager.authenticate()
 
     for query in settings.QUERIES:
         query = f'%23{query}'  # '%23' == '#'

@@ -7,3 +7,6 @@ rabbit-up:
 # Останавливаем и удаляем контейнеры
 rabbit-down:
 	cd rabbitmq && docker compose down
+
+post-links:
+	./manage.py post_links_parser

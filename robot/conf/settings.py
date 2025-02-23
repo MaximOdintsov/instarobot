@@ -43,6 +43,7 @@ AUTH_LIST_POST_LINKS = []
 AUTH_LIST_POST_DATA_PARSER = []
 AUTH_LIST_ACCOUNT_DATA_PARSER = []
 AUTH_LIST_SPAM_ROBOT = []
+SESSION_INSTAGRAM_COOKIES_PATH = 'data/instagram_cookies/'
 
 
 # FOR ROBOTS
@@ -63,7 +64,6 @@ try:
             globals()[key] = value
 except FileNotFoundError:
     print(f'Файл {ROBOT_SETTINGS_PATH} не найден. Используются настройки по умолчанию.')
-
 
 
 if RABBITMQ_USE is True:

@@ -1,7 +1,8 @@
 from typing import List, Dict
 
 from robot.helpers.selenium_management import start_driver, close_driver
-from robot.robot import auth
+from robot.robot import cookies_auth
+from robot.conf import settings
 
 
 class MultiInstagramAccountDriver:
@@ -9,10 +10,9 @@ class MultiInstagramAccountDriver:
     Класс, который создает driver и автоматически авторизуется в instagram.
     Зависит от функции robot.robot.auth
     """
-    def __init__(self, accounts: List[Dict]):
+    def __init__(self, accounts: List[str]):
         """
-        accounts: список словарей с данными аккаунтов,
-        например: [{"username": "user1", "password": "pass1"}, {"username": "user2", "password": "pass2"}, ...]
+        accounts: список с именами аккаунтов (имя из data/instagram_cookies/ без .pkl),
         """
         self.accounts = accounts
         self.current_index = 0
@@ -36,23 +36,19 @@ class MultiInstagramAccountDriver:
 
     def switch_account(self):
         """
-        Закрывает текущий драйвер, переключается на следующий аккаунт и создаёт новый драйвер.
-        Если аккаунты закончились, выбрасывается исключение.
+        Меняет аккаунт и авторизуется
         """
         self.current_index += 1
-        account = self.get_current_account()
-        if not account:
-            raise Exception("Нет доступных аккаунтов для авторизации.")
-        return account
+        self.authenticate()
 
     def authenticate(self):
         """
         Закрывает старый драйвер.
         Пытается авторизоваться с текущим аккаунтом.
         Если авторизация не удалась или произошла ошибка, автоматически переключается на следующий аккаунт.
-        Возвращает успешно авторизованный аккаунт и драйвер.
+        Возвращает драйвер с авторизованным аккаунтом.
         """
-        account = self.get_current_account()
+        account = self.get_current_account()  # username
         if not account:
             raise Exception("Нет аккаунтов для авторизации.")
 
@@ -60,17 +56,18 @@ class MultiInstagramAccountDriver:
             self.close_current_driver()
             self.start_new_driver()
             try:
-                print(f"Пытаюсь авторизоваться под аккаунтом: {account['username']}")
-                success = auth(driver=self.driver, username=account['username'], password=account['password'])
+                print(f"Пытаюсь авторизоваться под аккаунтом: {account}")
+                cookie_path = settings.SESSION_INSTAGRAM_COOKIES_PATH + account + '.pkl'
+                success = cookies_auth(driver=self.driver, cookie_path=cookie_path)
                 if success:
-                    print(f"Успешная авторизация под аккаунтом: {account['username']}")
-                    return account, self.driver
+                    print(f"Успешная авторизация под аккаунтом: {account}")
+                    return self.driver
                 else:
-                    print(f"Авторизация не удалась для аккаунта {account['username']}.")
-                    self.switch_account()
+                    print(f"Авторизация не удалась для аккаунта {account}.")
+                    self.current_index += 1
             except Exception as e:
-                print(f"Ошибка авторизации аккаунта {account['username']}: {e}")
-                self.switch_account()
+                print(f"Ошибка авторизации аккаунта {account}: {e}")
+                self.current_index += 1
             account = self.get_current_account()
 
         self.close_current_driver()
