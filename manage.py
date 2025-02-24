@@ -5,7 +5,7 @@ import importlib
 import asyncio
 from pathlib import Path
 
-from robot.database.orm import create_tables, async_engine
+from robot.database.orm import create_tables, get_engine_and_session
 from robot.conf import settings
 
 
@@ -45,5 +45,6 @@ def main():
 
 
 if __name__ == '__main__':
+    async_engine, async_session = get_engine_and_session()
     asyncio.run(create_tables(async_engine))
     main()

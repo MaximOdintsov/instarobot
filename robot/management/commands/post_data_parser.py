@@ -3,13 +3,12 @@ import asyncio
 import click
 from aio_pika import connect_robust, Message, DeliveryMode
 
-
 from robot.conf import settings
 from robot.robot import post_parsing
 from robot.helpers.utils import validate_instagram_url, ACCOUNT_VALUE
 from robot.helpers.logs import capture_output_to_file
-from robot.database.orm import async_session, get_object_by_filter, create_or_update_object
-from robot.database.models import Account, STATUS
+from robot.database.orm import get_engine_and_session, get_object_by_filter, create_or_update_object
+from robot.database.models import Account, ACCOUNT_STATUS
 from robot.management.base import MultiInstagramAccountDriver
 
 
@@ -19,7 +18,7 @@ class RobotCommand(MultiInstagramAccountDriver):
         super().__init__(settings.AUTH_LIST_POST_DATA_PARSER)
         self.driver = self.authenticate()
         self.channel = None
-        self.db_lock = asyncio.Lock()
+        self.async_engine, self.async_session = get_engine_and_session()
 
     async def post_data_parser(self, message):
         # Автоматическое подтверждение сообщения через контекстный менеджер
@@ -34,39 +33,42 @@ class RobotCommand(MultiInstagramAccountDriver):
                 self.driver.save_screenshot(err_path)
                 self.driver = self.switch_account()
                 raise Exception(f'Произошла ошибка парсинга поста. Путь: {err_path}')
-            print(f'Ссылок на аккаунты: {len(account_links)}')
+            print(f"Найдено {len(account_links)} ссылок на посты")
 
             for idx, account_link in enumerate(account_links):
-                print(f'Проверка ссыки #{idx}...')
+                print(f'Проверка ссыки #{idx}: {account_link}')
                 if validate_instagram_url(account_link) != ACCOUNT_VALUE:
-                    print(f'Пропускаем ссылку "{account_link}" из-за несоответствия шаблону.')
+                    print(f'Пропускаю ссылку "{account_link}" из-за несоответствия шаблону.')
                     continue
-                async with self.db_lock:
-                    print(f'Проверяю ссылку на аккаунт: {account_link}...')
-                    account_object = await get_object_by_filter(
-                        async_session_factory=async_session,
-                        model=Account,
-                        filters={'link': account_link}
-                    )
-                    if not account_object:
-                        print(f'Создаем аккаунт...')
-                        await create_or_update_object(
-                            async_session_factory=async_session,
-                            model=Account,
-                            filters={'link': account_link},
-                            defaults={'link': account_link, 'status': STATUS.PARSING}
-                        )
-                        print(f'Отправляем ссылку на аккаунт в соответствующую очередь...')
-                        # Отправляем ссылку на аккаунт в соответствующую очередь
-                        msg = Message(
-                            body=account_link.encode(),
-                            delivery_mode=DeliveryMode.PERSISTENT,
-                        )
-                        await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_ACCOUNT_LINKS)
-                        print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь.')
-                    else:
-                        print(f'Такой аккаунт уже есть в БД. Пропускаем.')
-                        continue
+
+                print(f'Проверяю ссылку на аккаунт: {account_link}...')
+                account_object = await get_object_by_filter(
+                    async_session_factory=self.async_session,
+                    model=Account,
+                    filters={'link': account_link}
+                )
+                if account_object:
+                    print(f'Аккаунт с ссылкой {account_link} уже есть в БД, пропускаю...')
+                    continue
+
+                print(f'Создаю аккаунт: {account_link}...')
+                account_object = await create_or_update_object(
+                    async_session_factory=self.async_session,
+                    model=Account,
+                    filters={'link': account_link},
+                    defaults={'link': account_link, 'status': ACCOUNT_STATUS.PARSING}
+                )
+                if account_object:
+                    print(f'Сохранил аккаунт в БД: {account_object}')
+
+                print(f'Отправляю ссылку {account_link} в очередь "{settings.QUEUE_ACCOUNT_LINKS}"...')
+                # Отправляем ссылку на аккаунт в соответствующую очередь
+                msg = Message(
+                    body=account_link.encode(),
+                    delivery_mode=DeliveryMode.PERSISTENT,
+                )
+                await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_ACCOUNT_LINKS)
+                print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь "{settings.QUEUE_ACCOUNT_LINKS}".')
             await message.ack()  # Подтверждаем сообщение после успешной обработки
         except Exception as e:
             print(f"Ошибка обработки: {e}")

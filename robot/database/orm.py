@@ -17,22 +17,24 @@ from robot.database.models import Base
 T = TypeVar('T', bound=Base)
 
 
-# Асинхронный движок (engine).
-async_engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=True,
-    pool_size=20,  # Adjust pool size based on your workload
-    max_overflow=10,  # Adjust maximum overflow connections
-    pool_recycle=3600,  # Periodically recycle connections (optional)
-    pool_pre_ping=True
-)
+def get_engine_and_session():
+    # Асинхронный движок (engine).
+    async_engine: AsyncEngine = create_async_engine(
+        settings.DATABASE_URL,
+        # echo=True,
+        pool_size=20,  # Adjust pool size based on your workload
+        max_overflow=50,  # Adjust maximum overflow connections
+        pool_recycle=3600,  # Periodically recycle connections (optional)
+        pool_pre_ping=True
+    )
 
-# Фабрика асинхронных сессий.
-async_session: sessionmaker[AsyncSession] = sessionmaker(
-    bind=async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+    # Фабрика асинхронных сессий.
+    async_session: sessionmaker[AsyncSession] = sessionmaker(
+        bind=async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False
+    )
+    return async_engine, async_session
 
 
 async def create_tables(async_engine: AsyncEngine) -> None:
