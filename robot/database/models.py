@@ -1,25 +1,23 @@
 import enum
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Enum, Boolean, func, Table, ForeignKey
-
+from sqlalchemy import DateTime, JSON, Enum, func, Table, ForeignKey, Column, Integer, String, text
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, Integer, String
 
 
 class Base(DeclarativeBase):
     __abstract__ = True
     id = Column(Integer, primary_key=True, autoincrement=True)
     create_datetime = Column(DateTime, default=func.now())
-    modify_datetime = Column(DateTime, onupdate=func.now())
+    modify_datetime = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
-class STATUS(enum.Enum):
-    PARSING = 'PARSING'
-    PREDICTING = 'PREDICTING'
-    FAILED = 'FAILED'
-    READY = 'READY'
-    SENT = 'SENT'
-    VALIDATED = 'VALIDATED'
+class ACCOUNT_STATUS(enum.IntEnum):
+    PARSING = 5
+    PREDICTING = 15
+    FAILED = 20
+    READY = 30
+    SENT = 40
+    VALIDATED = 100
 
 
 class AccountType(enum.Enum):
@@ -46,7 +44,10 @@ class Account(Base):
     link = Column(String, unique=True, nullable=False)
     data = Column(JSON, default=dict)
     status = Column(
-        Enum(STATUS, name='status_enum'), nullable=False, default=STATUS.PARSING, server_default='PARSING'
+        Integer,
+        nullable=False,
+        default=ACCOUNT_STATUS.PARSING,
+        server_default=text("5")
     )
     account_type = Column(
         Enum(AccountType, name='account_type_enum'), nullable=False, default=AccountType.UNKNOWN
