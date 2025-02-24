@@ -89,6 +89,6 @@ def validate_instagram_url(url: str) -> int:
     if post_pattern.match(url):
         return POST_VALUE
     elif account_pattern.match(url):
-        if 'reels' not in url:
+        if 'reels' not in url or 'explore' not in url:
             return ACCOUNT_VALUE
     return INVALID_VALUE

@@ -9,4 +9,4 @@ rabbit-down:
 	cd services/rabbitmq && docker compose down
 
 post-links:
-	./manage.py post_links_parser
+	./manage.py post_links_parser --max-scrolls=1

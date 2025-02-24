@@ -120,7 +120,7 @@ def cookies_auth(driver: webdriver, cookie_path: str):
         is_error=False
     )
     if save_data_element:
-        time.sleep(random.randrange(1, 3))
+        time.sleep(1)
         driver.switch_to.active_element.send_keys(Keys.ESCAPE)
 
     # Проверка входа
@@ -130,6 +130,7 @@ def cookies_auth(driver: webdriver, cookie_path: str):
             by=By.XPATH,
             searched_elem="//*[normalize-space(text())='Главная']",
             delay=10,
+            attempts=1
         )
         print("Вход выполнен успешно, доступ получен!")
         return True
@@ -191,45 +192,10 @@ def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10)
     return new_links, page_end
 
 
-
-    # last_height = driver.execute_script("return document.body.scrollHeight")
-    # post_links = set()
-
-
-
-    # for i in range(max_scrolls):
-    #     last_height = driver.execute_script("return document.body.scrollHeight")
-    #
-    #     # Получение ссылок
-    #     posts_parent_elelemt = get_wait_element(
-    #         driver=driver,
-    #         by=By.XPATH,
-    #         searched_elem='/html/body',
-    #         sleep=5,
-    #         delay=20,
-    #         attempts=1,
-    #     )
-    #     link_elements = get_link_elements(posts_parent_elelemt)
-    #     new_links = get_links(link_elements=link_elements)
-    #     print(f'Найдены новые ссылки на посты: {new_links}')
-    #     post_links.update(new_links)
-    #
-    #     # Скролл страницы
-    #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    #     time.sleep(wait_time)
-    #
-    #     # Проверка конца страницы
-    #     new_height = driver.execute_script("return document.body.scrollHeight")
-    #     if new_height == last_height:
-    #         break
-    #
-    # return post_links
-
-
 ####################
 ### Парсинг ссылок на аккаунты из поста
 ####################
-def accounts_parsing(driver: webdriver, post_link: str) -> list:
+def post_parsing(driver: webdriver, post_link: str) -> list:
     """
     Функция для парсинга аккаунтов из поста
     """
@@ -265,24 +231,6 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
 
     # Поиск одного или двух указанных аккаунтов в посте
     if find_links is False:
-        # try:
-        #     accounts_parent = get_wait_element(
-        #         driver=driver,
-        #         by=By.XPATH,
-        #         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div/div/div',
-        #         delay=5,
-        #         attempts=1,
-        #         is_error=True
-        #     )
-        # except Exception:
-        #     accounts_parent = get_wait_element(
-        #         driver=driver,
-        #         by=By.XPATH,
-        #         searched_elem='/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/article/div[1]/header/div[2]/div[1]/div[1]/div/div/',
-        #         delay=5,
-        #         attempts=1,
-        #         is_error=False
-        #     )
         accounts_parent = get_wait_element(
                 driver=driver,
                 by=By.XPATH,
@@ -295,25 +243,11 @@ def accounts_parsing(driver: webdriver, post_link: str) -> list:
             print('Найдено в "Поиск одного или двух указанных аккаунтов в посте"')
             find_links = True
 
-    # if find_links is False:  # FIXME это наверное не нужно - протестить
-    #     # Поиск одного аккаунта в посте
-    #     accounts_parent = get_wait_element(
-    #         driver=driver,
-    #         by=By.XPATH,
-    #         searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[1]/div[1]/section/main/div/div[1]/div/div[2]/div/div[1]/div/div[2]/div/div[1]/div[1]',
-    #         delay=3,
-    #         attempts=1,
-    #         is_error=False
-    #     )
-    #     if accounts_parent:
-    #         print('Найдено в "Поиск одного аккаунта в посте"')
-    #         find_links = True
-
     # Поиск ссылок на аккаунты из родительского элемента
     if find_links is True:
         link_elements = get_link_elements(driver)
         account_links = get_links(link_elements=link_elements)
-        print(f'Найдены ссылки: {account_links}')
+        print(f'Получил {len(account_links)} ссылок из поста: {account_links}')
         return account_links
     else:
         print(f'Ссылка(и) не найдена(ы)')
