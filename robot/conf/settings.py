@@ -1,9 +1,13 @@
 import yaml
 
 # DATABASE
-DB_PATH = "data/db/instagram.db"
-SQLALCHEMY_URL = f"sqlite:///{DB_PATH}"
-DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
+DB_USER = ''
+DB_PASSWORD = ''
+DB_HOST = ''
+DB_PORT = 5432
+DB_NAME = ''
+SQLALCHEMY_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 
 # MAIN PATHS
@@ -32,7 +36,7 @@ UPDATE_ERROR_LOGS_PATH = 'data/logs/update_db_error.log'
 RABBITMQ_USE = False
 RABBITMQ_HOST = ''
 RABBITMQ_PORT = ''
-RABBITMQ_SECRETS = 'rabbitmq/secrets.env'
+RABBITMQ_SECRETS = 'services/rabbitmq/secrets.env'
 QUEUE_POST_LINKS = ''
 QUEUE_ACCOUNT_LINKS = ''
 QUEUE_ACCOUNT_DATA = ''
@@ -67,17 +71,16 @@ except FileNotFoundError:
 
 
 if RABBITMQ_USE is True:
-    from pika import ConnectionParameters, PlainCredentials
     import os
     from dotenv import load_dotenv
 
     load_dotenv(dotenv_path=RABBITMQ_SECRETS)
     RABBITMQ_DEFAULT_USER = os.getenv("RABBITMQ_DEFAULT_USER")
     RABBITMQ_DEFAULT_PASS = os.getenv("RABBITMQ_DEFAULT_PASS")
-    RABBITMQ_CONNECTION = ConnectionParameters(
-        host=RABBITMQ_HOST,
-        port=RABBITMQ_PORT,
-        credentials=PlainCredentials(username=RABBITMQ_DEFAULT_USER, password=RABBITMQ_DEFAULT_PASS)
-    )
+    # RABBITMQ_CONNECTION = ConnectionParameters(
+    #     host=RABBITMQ_HOST,
+    #     port=RABBITMQ_PORT,
+    #     credentials=PlainCredentials(username=RABBITMQ_DEFAULT_USER, password=RABBITMQ_DEFAULT_PASS)
+    # )
 
 
