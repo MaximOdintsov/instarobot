@@ -1,14 +1,18 @@
-import random
 import time
-import requests
+import uuid
+import random
+from typing import List
+from pathlib import Path
 
+import requests
 from selenium import webdriver
 from selenium.common import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from typing import List
 from selenium.webdriver.remote.webelement import WebElement
+
+from robot.conf import settings
 
 
 def start_driver(attempts: int = 3, options: webdriver.ChromeOptions = None, logs: bool = True) -> webdriver.Chrome:
@@ -161,3 +165,13 @@ def get_links(link_elements: List[WebElement]) -> list:
         if href:
             link_list.add(href)
     return list(link_list) or []
+
+
+def save_screenshot(driver: webdriver, img_name: str) -> Path:
+    root = Path(settings.SCREENSHOT_ROOT)
+    root.mkdir(parents=True, exist_ok=True)
+    file_name = f'{img_name}_{uuid.uuid4()}.png'
+    path = root / file_name
+
+    driver.save_screenshot(path)
+    return path.absolute()

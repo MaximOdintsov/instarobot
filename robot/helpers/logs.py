@@ -115,8 +115,8 @@ def capture_output_to_file(command_name: str):
             base_dir = os.path.join(settings.LOGS_ROOT, str(date.today()))
             os.makedirs(base_dir, exist_ok=True)
 
-            out_file_path = os.path.join(base_dir, f'{command_name}.out')
-            err_file_path = os.path.join(base_dir, f'{command_name}.err')
+            out_file_path = os.path.join(base_dir, f'{command_name}.out.log')
+            err_file_path = os.path.join(base_dir, f'{command_name}.err.log')
 
             # Открываем файлы
             f_out = open(out_file_path, 'a', encoding='utf-8')

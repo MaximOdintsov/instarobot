@@ -7,6 +7,7 @@ from aio_pika import connect_robust, Message, DeliveryMode
 
 from robot.conf import settings
 from robot.robot import parsing_account_info
+from robot.helpers.selenium_management import save_screenshot
 from robot.helpers.logs import capture_output_to_file
 from robot.database.orm import get_engine_and_session, create_or_update_object, delete_objects
 from robot.database.models import Account, ACCOUNT_STATUS
@@ -63,9 +64,8 @@ class RobotCommand(MultiInstagramAccountDriver):
                 )
                 if account_object:
                     print(f'Поставил аккаунт в статус Failed в БД: {account_object}')
-
-                err_path = f'data/img_error/account-parsing-error-{uuid.uuid4()}.png'
-                self.driver.save_screenshot(err_path)
+                
+                err_path = save_screenshot(driver=self.driver, img_name='account_parsing_error')
                 print(f'Произошла ошибка парсинга аккаунта. Путь до скрина: {err_path}')
 
             await message.ack()  # Подтверждаем сообщение после успешной обработки

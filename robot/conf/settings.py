@@ -9,6 +9,7 @@ DB_NAME = ''
 
 # MAIN PATHS
 LOGS_ROOT = 'data/logs'
+SCREENSHOT_ROOT = 'data/screenshots'
 COMMANDS_ROOT = 'robot/management/commands'
 ACCOUNT_TYPE_MODEL_PATH = 'robot/ml/models/account_type_1.pkl'
 
