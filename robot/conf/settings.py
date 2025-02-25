@@ -6,9 +6,6 @@ DB_PASSWORD = ''
 DB_HOST = ''
 DB_PORT = 5432
 DB_NAME = ''
-SQLALCHEMY_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
 
 # MAIN PATHS
 LOGS_ROOT = 'data/logs'
@@ -34,12 +31,12 @@ UPDATE_ERROR_LOGS_PATH = 'data/logs/update_db_error.log'
 
 # RABBITMQ
 RABBITMQ_USE = False
-RABBITMQ_HOST = ''
-RABBITMQ_PORT = ''
+RABBITMQ_HOST = "localhost"
+RABBITMQ_PORT = 5672
 RABBITMQ_SECRETS = 'services/rabbitmq/secrets.env'
-QUEUE_POST_LINKS = ''
-QUEUE_ACCOUNT_LINKS = ''
-QUEUE_ACCOUNT_DATA = ''
+QUEUE_POST_LINKS = 'post_links'
+QUEUE_ACCOUNT_LINKS = 'account_links'
+QUEUE_POSTPROCESSING_ACCOUNTS = 'predict_accounts'
 
 
 # AUTH DATA: List[dict, dict]
@@ -68,6 +65,10 @@ try:
             globals()[key] = value
 except FileNotFoundError:
     print(f'Файл {ROBOT_SETTINGS_PATH} не найден. Используются настройки по умолчанию.')
+
+
+SQLALCHEMY_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 
 if RABBITMQ_USE is True:
