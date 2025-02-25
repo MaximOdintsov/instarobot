@@ -39,7 +39,7 @@ def parse_activity_data(data_list: list) -> dict:
             return int(float(clean_number) * multiplier)
         return 0
 
-    result = {'posts': -1, 'subscribers': -1, 'subscriptions': -1}
+    result = {'posts': 0, 'subscribers': 0, 'subscriptions': 0}
     for item in data_list:
         if 'публикац' in item:
             result['posts'] = parse_number_accurate(item)

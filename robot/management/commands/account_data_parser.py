@@ -25,12 +25,17 @@ class RobotCommand(MultiInstagramAccountDriver):
         try:
             account_link = message.body.decode()
             print(f"Получена ссылка на аккаунт: {account_link}")
+
             account_data = parsing_account_info(driver=self.driver, account_link=account_link)
-            if not account_data:
+            data_is_empty = True
+            for data_item in account_data:
+                if data_item:
+                    data_is_empty = False
+            if data_is_empty:
                 err_path = f'data/img_error/account-parsing-error-{uuid.uuid4()}.img'
                 self.driver.save_screenshot(err_path)
                 self.driver = self.switch_account()
-                raise Exception(f'Произошла ошибка парсинга поста. Путь: {err_path}')
+                raise Exception(f'Произошла ошибка парсинга аккаунта. Путь: {err_path}')
             print(f"Найдены данные на странице аккаунта: {account_data}")
 
             print(f'Записываю данные аккаунта "{account_link}" в БД...')

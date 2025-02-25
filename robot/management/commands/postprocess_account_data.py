@@ -27,8 +27,6 @@ class RobotCommand:
                 filters={'link': account_link}
             )
             if account_object:
-
-
                 data = account_object.data
                 data['description'] = data['description'] or ''
                 data['emails'] = extract_emails(data.get('description', ''))

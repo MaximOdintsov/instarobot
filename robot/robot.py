@@ -352,9 +352,9 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
         'description': description,
         'links_contacts': list(links_contacts),
         'links_description': list(links_description),
-        'posts': activity_attrs.get('posts', -1),
-        'subscribers': activity_attrs.get('subscribers', -1),
-        'subscriptions': activity_attrs.get('subscriptions', -1)
+        'posts': activity_attrs.get('posts', 0),
+        'subscribers': activity_attrs.get('subscribers', 0),
+        'subscriptions': activity_attrs.get('subscriptions', 0)
     }
     return account_info
 
