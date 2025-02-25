@@ -15,8 +15,14 @@ from robot.management.base import MultiInstagramAccountDriver
 
 
 class RobotCommand(MultiInstagramAccountDriver):
-    def __init__(self):
-        super().__init__(settings.AUTH_LIST_ACCOUNT_DATA_PARSER)
+    def __init__(self, account_indexes: list = []):
+        auth_list = settings.AUTH_LIST_ACCOUNT_DATA_PARSER
+        if account_indexes:
+            auth_list = [auth_list[idx] for idx in account_indexes if -1 < idx < len(auth_list)]
+
+        print(f'auth_list: {auth_list}')
+        super().__init__(auth_list)
+
         self.driver = self.authenticate()
         self.channel = None
         self.async_engine, self.async_session = get_engine_and_session()
@@ -64,7 +70,7 @@ class RobotCommand(MultiInstagramAccountDriver):
                 )
                 if account_object:
                     print(f'Поставил аккаунт в статус Failed в БД: {account_object}')
-                
+
                 err_path = save_screenshot(driver=self.driver, img_name='account_parsing_error')
                 print(f'Произошла ошибка парсинга аккаунта. Путь до скрина: {err_path}')
 
@@ -97,7 +103,8 @@ class RobotCommand(MultiInstagramAccountDriver):
 
 
 @click.command(name="account_data_parser")
+@click.option("-ids", multiple=True, type=int, default=[])
 @capture_output_to_file("account_data_parser")
-def run():
-    command = RobotCommand()
+def run(ids):
+    command = RobotCommand(account_indexes=ids)
     asyncio.run(command.main())

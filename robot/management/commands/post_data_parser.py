@@ -13,8 +13,14 @@ from robot.management.base import MultiInstagramAccountDriver
 
 
 class RobotCommand(MultiInstagramAccountDriver):
-    def __init__(self):
-        super().__init__(settings.AUTH_LIST_POST_LINKS)
+    def __init__(self, account_indexes: list = []):
+        auth_list = settings.AUTH_LIST_POST_DATA_PARSER
+        if account_indexes:
+            auth_list = [auth_list[idx] for idx in account_indexes if -1 < idx < len(auth_list)]
+
+        print(f'auth_list: {auth_list}')
+        super().__init__(auth_list)
+
         self.driver = self.authenticate()
         self.channel = None
         self.async_engine, self.async_session = get_engine_and_session()
@@ -99,7 +105,9 @@ class RobotCommand(MultiInstagramAccountDriver):
 
 
 @click.command(name="post_data_parser")
+@click.option("-ids", multiple=True, type=int, default=[])
 @capture_output_to_file("post_data_parser")
-def run():
-    command = RobotCommand()
+def run(ids):
+    print(f'account_ids: {ids}')
+    command = RobotCommand(account_indexes=ids)
     asyncio.run(command.main())

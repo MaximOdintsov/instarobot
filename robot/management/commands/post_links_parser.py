@@ -13,8 +13,14 @@ from robot.management.base import MultiInstagramAccountDriver
 
 
 class RobotCommand(MultiInstagramAccountDriver):
-    def __init__(self, max_scrolls: int):
-        super().__init__(settings.AUTH_LIST_POST_DATA_PARSER)
+    def __init__(self, max_scrolls: int, account_indexes: list = []):
+        auth_list = settings.AUTH_LIST_POST_LINKS_PARSER
+        if account_indexes:
+            auth_list = [auth_list[idx] for idx in account_indexes if -1 < idx < len(auth_list)]
+
+        print(f'auth_list: {auth_list}')
+        super().__init__(auth_list)
+
         self.driver = self.authenticate()
         self.channel = None
         self.max_scrolls = max_scrolls
@@ -88,9 +94,11 @@ class RobotCommand(MultiInstagramAccountDriver):
                 await asyncio.sleep(random.randrange(5, 10))  # Пауза между итерациями для имитации задержки
 
 
-@click.option("--max-scrolls", default=2, help="Количество прокруток страницы вниз при парсинге постов")
 @click.command(name="post_links_parser")
+@click.option("--max-scrolls", default=2, help="Количество прокруток страницы вниз при парсинге постов")
+@click.option("-ids", multiple=True, type=int, default=[])
 @capture_output_to_file("post_links_parser")
-def run(max_scrolls):
-    command = RobotCommand(max_scrolls)
+def run(max_scrolls, ids):
+    print(f'account_ids: {ids}')
+    command = RobotCommand(max_scrolls, ids)
     asyncio.run(command.main())
