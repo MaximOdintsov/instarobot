@@ -1,6 +1,6 @@
 from typing import Type, TypeVar, Optional, List, Any, Dict
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
@@ -148,3 +148,36 @@ async def get_objects_by_where(
             await session.rollback()
             print(f"[get_objects_by_where] DB Error: {e}")
             return []
+
+
+async def delete_objects(
+    async_session_factory: sessionmaker[AsyncSession],
+    model: Type[T],
+    filters: Optional[Dict[str, Any]] = {},
+) -> bool:
+    """
+    Удалить объект из базы данных по заданным фильтрам.
+
+    :param async_session_factory: Фабрика асинхронных сессий.
+    :param model: Модель (класс), унаследованная от Base.
+    :param filters: Словарь фильтров для метода filter_by.
+    :return: True, если объект был успешно удален, иначе False.
+    """
+    async with async_session_factory() as session:
+        try:
+            # Выполняем запрос на удаление с указанными фильтрами
+            stmt = delete(model).filter_by(**filters)
+            result = await session.execute(stmt)
+
+            # Проверяем, было ли удалено хотя бы одно значение
+            if result.rowcount > 0:
+                await session.commit()
+                return True
+            else:
+                await session.rollback()
+                return False
+        except SQLAlchemyError as e:
+            await session.rollback()
+            # Логируйте или обрабатывайте ошибку по необходимости
+            print(f"[delete_object] DB Error: {e}")
+            return False
