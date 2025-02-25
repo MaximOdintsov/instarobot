@@ -9,7 +9,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 from robot.helpers.selenium_management import open_link, get_wait_element, get_wait_elements, get_link_elements, get_links
-from robot.helpers.utils import extract_original_link, parse_activity_data
+from robot.helpers.utils import parse_activity_data
 
 
 ####################
@@ -254,7 +254,7 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
 
     links_contacts = set()
     links_description = set()
-    description = None
+    description = ''
     activity_attrs = {}
 
     # Парсинг описания аккаунта
