@@ -257,6 +257,18 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     description = ''
     activity_attrs = {}
 
+    # Проверка на закрытый аккаунт
+    confidential_account_element = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem="//*[contains(., 'конфиденциальный аккаунт')]",
+        attempts=1,
+        delay=5,
+        is_error=False
+    )
+    if confidential_account_element:
+        return {}
+    
     # Парсинг описания аккаунта
     for i in [1, 2]:
         account_description_parent_element = get_wait_element(  # Элемент со всей указанной информацией об аккаунте
@@ -347,7 +359,9 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
                 activity_attrs = parse_activity_data(activity_list)  # 'posts', 'subscribers', 'subscriptions'
                 print(f'Найдены атрибуты активности: {activity_attrs}')
             break
-
+    
+    
+    
     account_info = {
         'description': description,
         'links_contacts': list(links_contacts),
