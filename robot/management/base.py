@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 
 from robot.helpers.selenium_management import start_driver, close_driver
 from robot.robot import cookies_auth

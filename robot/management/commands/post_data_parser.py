@@ -13,9 +13,8 @@ from robot.management.base import MultiInstagramAccountDriver
 
 
 class RobotCommand(MultiInstagramAccountDriver):
-
     def __init__(self):
-        super().__init__(settings.AUTH_LIST_POST_DATA_PARSER)
+        super().__init__(settings.AUTH_LIST_POST_LINKS)
         self.driver = self.authenticate()
         self.channel = None
         self.async_engine, self.async_session = get_engine_and_session()
@@ -28,6 +27,10 @@ class RobotCommand(MultiInstagramAccountDriver):
 
             # Обработка поста для получения ссылок на аккаунты
             account_links = post_parsing(driver=self.driver, post_link=post_link)
+
+            ## FIXME ТУТ НУЖНО ПРИВЯЗАТЬ ПОСТ К АККАУНТУ + ОТДАТЬ ОСТАВШИЕСЯ НАЙДЕННЫЕ АККАУНТЫ
+            ## FIXME ТУТ ВЗЯТЬ ДАННЫЕ С ПОСТА: ОПИСАНИЕ + ХЭШТЕГИ, ВЛАДЕЛЬЦА, КОЛ-ВО ЛАЙКОВ И ТД
+
             if not account_links:
                 err_path = f'data/img_error/post-error-{uuid.uuid4()}.img'
                 self.driver.save_screenshot(err_path)
@@ -51,7 +54,7 @@ class RobotCommand(MultiInstagramAccountDriver):
                     print(f'Аккаунт с ссылкой {account_link} уже есть в БД, пропускаю...')
                     continue
 
-                print(f'Создаю аккаунт: {account_link}...')
+                print(f'Создаю аккаунт: "{account_link}"...')
                 account_object = await create_or_update_object(
                     async_session_factory=self.async_session,
                     model=Account,
