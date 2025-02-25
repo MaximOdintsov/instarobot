@@ -55,18 +55,6 @@ def simple_auth(driver: webdriver, username: str, password: str):
         print(f'Инстраграм запросил код для аккаунта "{username}". Пропускаю...')
         return False
 
-    # if check_your_email_element:
-    #     code_element = get_wait_element(  # Поле с кодом подтверждения
-    #         driver=driver,
-    #         by=By.NAME,
-    #         searched_elem="email",
-    #         attempts=1,
-    #         delay=5,
-    #     )
-    #     code_text = input(f'Проверьте почту {username}. Введите код от инстаграмма:')
-    #     code_element.send_keys(code_text)
-    #     driver.switch_to.active_element.send_keys(Keys.ENTER)  # Отправить код подтверждения
-
     # Сохранить данные для входа в Instagram?
     save_data_element = get_wait_element(
         driver=driver,
@@ -270,35 +258,39 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     activity_attrs = {}
 
     # Парсинг описания аккаунта
-    account_description_parent_element = get_wait_element(  # Элемент со всей указанной информацией об аккаунте
-        driver=driver,
-        by=By.XPATH,
-        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/header/section[4]',
-        delay=5,
-        attempts=1,
-        is_error=False
-    )
-    desctiption_span_elements = get_wait_elements(  # Элементы span из описания аккаунта\n",
-        driver=account_description_parent_element,
-        by=By.TAG_NAME,
-        searched_elem='span',
-        delay=2,
-        attempts=1,
-        is_error=False
-    )
-    for desctiption_span_element in desctiption_span_elements:  # Нажимаем на кнопку "ещё" (раскрываем описание)
-        if 'ещё' == desctiption_span_element.text:
-            desctiption_span_element.click()
-            time.sleep(random.randrange(1, 2))
+    for i in [1, 2]:
+        account_description_parent_element = get_wait_element(  # Элемент со всей указанной информацией об аккаунте
+            driver=driver,
+            by=By.XPATH,
+            searched_elem=f'/html/body/div[{i}]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/header/section[4]',
+            delay=5,
+            attempts=1,
+            is_error=False
+        )
+        if account_description_parent_element:
+            break
 
     if account_description_parent_element:
+        desctiption_span_elements = get_wait_elements(  # Элементы span из описания аккаунта\n",
+            driver=account_description_parent_element,
+            by=By.TAG_NAME,
+            searched_elem='span',
+            delay=2,
+            attempts=1,
+            is_error=False
+        )
+
+        for desctiption_span_element in desctiption_span_elements:  # Нажимаем на кнопку "ещё" (раскрываем описание)
+            if 'ещё' == desctiption_span_element.text:
+                desctiption_span_element.click()
+
         # Парсинг описания аккаунта
         description = account_description_parent_element.text
 
         # Парсинг ссылок из описания аккаунта
         link_elements = get_link_elements(account_description_parent_element)
         find_links_description = get_links(link_elements=link_elements)
-        links_description.update([extract_original_link(find_link_description) for find_link_description in find_links_description])
+        links_description.update(find_links_description)
 
         # Парсинг ссылок из окна контактов
         account_links_button_element = get_wait_element(  # Кнопка для перехода в указанные контакты
@@ -311,11 +303,11 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
         )
         if account_links_button_element:
             account_links_button_element.click()  # Открытие модального окна с указанными ссылками
-            for i in [5, 6]:  # Поиск элемента с модальным окном
+            for i in [4, 5, 6]:  # Поиск элемента с модальным окном
                 link_parent_element = get_wait_element(  # Модальное окно с указанными ссылками
                     driver=driver,
                     by=By.XPATH,
-                    searched_elem=f'/html/body/div[{i}]/div[1]/div/div[2]/div/div/div',
+                    searched_elem=f'/html/body/div[{i}]',
                     delay=3,
                     attempts=1,
                     sleep=2,
@@ -324,36 +316,46 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
                 if link_parent_element:
                     link_elements = get_link_elements(link_parent_element)
                     find_links_modal = get_links(link_elements=link_elements)
-                    links_contacts.update([extract_original_link(find_link_modal) for find_link_modal in find_links_modal])
+                    links_contacts.update(find_links_modal)
+                    driver.switch_to.active_element.send_keys(Keys.ESCAPE)
                     break
-    print(f'\n___________________\nСсылка на аккаунт: {account_link}\ndescription: {description}\n'
-          f'Ссылки из описания: {links_description}\nСсылки из контактов: {links_contacts}')
 
     # Парсинг активности аккаунта
-    activity_account_parent_element = get_wait_element(  # Родительский элемент с кол-вом постов, подписчиков и подписок
-        driver=driver,
-        by=By.XPATH,
-        searched_elem='/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/header/section[3]',
-        delay=2,
-        attempts=1,
-        is_error=False
-    )
-    if activity_account_parent_element:
-        activity_account_attributes_elements = get_wait_elements(  # Родительский элемент с кол-вом постов, подписчиков и подписок
-            driver=activity_account_parent_element,
-            by=By.TAG_NAME,
-            searched_elem='li',
-            delay=3,
+    for i in [1, 2, 3]:  # Элемент с активностостью аккаунта
+        activity_account_parent_element = get_wait_element(
+            # Родительский элемент с кол-вом постов, подписчиков и подписок
+            driver=driver,
+            by=By.XPATH,
+            searched_elem=f'/html/body/div[{i}]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/header/section[3]',
+            delay=2,
             attempts=1,
             is_error=False
         )
-        if activity_account_attributes_elements:
-            activity_list = [activity_account_attributes_element.text for activity_account_attributes_element in activity_account_attributes_elements]
-            activity_attrs = parse_activity_data(activity_list)  # 'posts', 'subscribers', 'subscriptions'
-            print(f'Найдены атрибуты активности: {activity_attrs}')
-    account_info = {'description': description,
-                    'links_contacts': list(links_contacts),
-                    'links_description': list(links_description)} | activity_attrs
+        if activity_account_parent_element:
+            activity_account_attributes_elements = get_wait_elements(
+                # Родительский элемент с кол-вом постов, подписчиков и подписок
+                driver=activity_account_parent_element,
+                by=By.TAG_NAME,
+                searched_elem='li',
+                delay=3,
+                attempts=1,
+                is_error=False
+            )
+            if activity_account_attributes_elements:
+                activity_list = [activity_account_attributes_element.text for activity_account_attributes_element in
+                                 activity_account_attributes_elements]
+                activity_attrs = parse_activity_data(activity_list)  # 'posts', 'subscribers', 'subscriptions'
+                print(f'Найдены атрибуты активности: {activity_attrs}')
+            break
+
+    account_info = {
+        'description': description,
+        'links_contacts': list(links_contacts),
+        'links_description': list(links_description),
+        'posts': activity_attrs.get('posts', -1),
+        'subscribers': activity_attrs.get('subscribers', -1),
+        'subscriptions': activity_attrs.get('subscriptions', -1)
+    }
     return account_info
 
 

@@ -96,9 +96,12 @@ def get_wait_element(driver: webdriver, by: By, searched_elem: str, delay: int =
                 print(f'Попытка #{attempt}\nОшибка получения элемента "{searched_elem}": {str(e)}.')
             time.sleep(5)
     else:
+        log = f'Элемент "{searched_elem}" не найден.'
         if is_error:
-            raise Exception(f'Элемент "{searched_elem}" не найден.')
+            raise Exception(log)
         else:
+            if logs:
+                print(log)
             return ''
 
 
@@ -116,9 +119,12 @@ def get_wait_elements(driver: webdriver, by: By, searched_elem: str, delay: int 
                 print(f'Попытка #{attempt}\nОшибка получения элементов "{searched_elem}": {str(e)}.')
             time.sleep(3)
     else:
+        log = f'Элементы "{searched_elem}" не найдены.'
         if is_error:
-            raise Exception(f'Элементы "{searched_elem}" не найдены.')
+            raise Exception(log)
         else:
+            if logs:
+                print(log)
             return []
 
 
