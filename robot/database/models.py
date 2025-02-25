@@ -13,11 +13,16 @@ class Base(DeclarativeBase):
 
 class ACCOUNT_STATUS(enum.IntEnum):
     PARSING = 5
-    PREDICTING = 15
+    POSTPROCESSING = 15
     FAILED = 20
     READY = 30
-    SENT = 40
+    ANNOTATED = 40
     VALIDATED = 100
+
+
+# class POST_STATUS(enum.IntEnum):
+#     PARSING = 5
+#     READY = 10
 
 
 class AccountType(enum.Enum):
@@ -65,7 +70,12 @@ class AccountPost(Base):
 
     link = Column(String, unique=True, nullable=False)
     data = Column(JSON, default=dict)
-
+    # status = Column(
+    #     Integer,
+    #     nullable=False,
+    #     default=POST_STATUS.PARSING,
+    #     server_default=text("5")
+    # )
     # Добавляем отношение "многие ко многим" к аккаунтам
     accounts = relationship(
         "Account",
