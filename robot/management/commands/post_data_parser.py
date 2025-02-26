@@ -1,3 +1,5 @@
+import sys
+import time
 import uuid
 import asyncio
 import click
@@ -24,6 +26,18 @@ class RobotCommand(MultiInstagramAccountDriver):
         self.driver = self.authenticate()
         self.channel = None
         self.async_engine, self.async_session = get_engine_and_session()
+
+    async def shutdown(self):
+        """Безопасное завершение работы: отмена всех задач и выход из скрипта."""
+        print("Выполняется безопасное завершение работы скрипта...")
+        # Отменяем все задачи, кроме текущей
+        pending = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+        for task in pending:
+            task.cancel()
+        # Ожидаем завершения всех отменённых задач
+        await asyncio.gather(*pending, return_exceptions=True)
+        # При использовании контекстных менеджеров (async with connection) соединения закрываются автоматически
+        sys.exit(0)
 
     async def post_data_parser(self, message):
         # Автоматическое подтверждение сообщения через контекстный менеджер
@@ -80,8 +94,11 @@ class RobotCommand(MultiInstagramAccountDriver):
                 print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь "{settings.QUEUE_ACCOUNT_LINKS}".')
             await message.ack()  # Подтверждаем сообщение после успешной обработки
         except Exception as e:
-            print(f"Ошибка обработки: {e}")
+            print(f"Ошибка обработки: {e}. driver: {self.driver}")
             await message.reject(requeue=True)  # Отклоняем сообщение, чтобы оно осталось в очереди
+            if not self.driver:
+                print(f'Полностью останавливаю скрипт...')
+                await self.shutdown()
 
     async def main(self):
         connection = await connect_robust(

@@ -3,6 +3,7 @@ import uuid
 import random
 from typing import List
 from pathlib import Path
+from datetime import date
 
 import requests
 from selenium import webdriver
@@ -168,7 +169,7 @@ def get_links(link_elements: List[WebElement]) -> list:
 
 
 def save_screenshot(driver: webdriver, img_name: str) -> Path:
-    root = Path(settings.SCREENSHOT_ROOT)
+    root = Path(settings.SCREENSHOT_ROOT) / str(date.today())
     root.mkdir(parents=True, exist_ok=True)
     file_name = f'{img_name}_{uuid.uuid4()}.png'
     path = root / file_name

@@ -50,6 +50,7 @@ class MultiInstagramAccountDriver:
         """
         account = self.get_current_account()  # username
         if not account:
+            self.close_current_driver()
             raise Exception("Нет аккаунтов для авторизации.")
 
         while account:
