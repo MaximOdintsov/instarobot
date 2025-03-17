@@ -6,15 +6,18 @@ import numpy as np
 
 from robot.helpers.async_utils import url_shortening_async
 from robot.helpers.logs import capture_output_to_file
-from robot.database.models import Account, AccountType, STATUS
-from robot.database.orm import async_session, create_or_update_object, get_object_by_filter, get_objects_by_where
+from robot.database.models import Account, AccountType, ACCOUNT_STATUS
+from robot.database.orm import get_engine_and_session,  create_or_update_object, get_object_by_filter, get_objects_by_where
 from robot.conf import settings
+
+async_engine, async_session = get_engine_and_session()
 
 
 ################################
 ### Обновление данных в БД на верифицированные из таблицы
 ################################
 async def update_account_from_table(idx: int, row: dict):
+
     # Валидация и обработка данных аккаунта из таблицы
     account_link = row['Ссылка на аккаунт']
     if account_link:
@@ -55,7 +58,7 @@ async def update_account_from_table(idx: int, row: dict):
                 'link': account_link,
                 'data': data,
                 'account_type': verified_account_type,
-                'status': STATUS.VALIDATED
+                'status': ACCOUNT_STATUS.VALIDATED
             }
         )
         print(f'\nСоздал новый аккаунт в БД из таблицы: "{account.link}"!')
@@ -63,8 +66,9 @@ async def update_account_from_table(idx: int, row: dict):
 
     # Обновление данных в БД
     if not account.data.get('verified_account_type', ''):
-        print(f'\n\n--------\nОбновляю данные в БД для аккаунта "{account.link}"...'
-              f'\nТекущий тип аккаунта: "{account.account_type.value}".\nТекущий статус: "{account.status.value}"')
+        print(f'\n\n--------\nОбновляю данные в БД для аккаунта "{account.link}"\nTYPE: "{account.account_type}"...')
+        print(f'\nТекущий тип аккаунта: "{account.account_type.value}".\nТекущий статус: "{account.status}"')
+
         new_data = account.data
         new_data['verified_account_type'] = verified_account_type.value
 
@@ -75,11 +79,11 @@ async def update_account_from_table(idx: int, row: dict):
             defaults={
                 'data': new_data,
                 'account_type': verified_account_type,
-                'status': STATUS.VALIDATED
+                'status': ACCOUNT_STATUS.VALIDATED
             }
         )
         print(f'\nУспешно обновил данные для аккаунта "{account.link}"!'
-              f'\nНовый тип аккаунта: "{verified_account_type.value}".\nНовый статус: "{STATUS.VALIDATED.value}".')
+              f'\nНовый тип аккаунта: "{verified_account_type.value}".\nНовый статус: "{ACCOUNT_STATUS.VALIDATED}".')
         return True
     return False
 
@@ -221,7 +225,7 @@ async def main():
     accounts = await get_objects_by_where(
         async_session,
         Account,
-        Account.status.in_([STATUS.PARSING])
+        Account.status.in_([ACCOUNT_STATUS.READY])
     )
     data_rows = await get_data_for_table(accounts)
     numpy_array = np.array(data_rows, dtype=object)
@@ -241,7 +245,7 @@ async def main():
             async_session_factory=async_session,
             model=Account,
             filters={'id': account.id},
-            defaults={'status': STATUS.READY}
+            defaults={'status': ACCOUNT_STATUS.ANNOTATED}
         )
 
 

@@ -6,8 +6,8 @@ services:
       - 15672:15672
       - 5672:5672
     env_file:
-      - secrets.env
+      - .env
     volumes:
-      - data:/var/lib/rabbitmq
+      - rabbitmq_data:/var/lib/rabbitmq
 volumes:
-  data:
+  rabbitmq_data:

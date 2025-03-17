@@ -22,8 +22,8 @@ def get_engine_and_session():
     async_engine: AsyncEngine = create_async_engine(
         settings.DATABASE_URL,
         # echo=True,
-        pool_size=20,  # Adjust pool size based on your workload
-        max_overflow=50,  # Adjust maximum overflow connections
+        pool_size=100,  # Adjust pool size based on your workload
+        max_overflow=150,  # Adjust maximum overflow connections
         pool_recycle=3600,  # Periodically recycle connections (optional)
         pool_pre_ping=True
     )

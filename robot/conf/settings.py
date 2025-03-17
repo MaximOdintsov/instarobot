@@ -1,4 +1,9 @@
 import yaml
+import os
+from dotenv import load_dotenv
+
+SECRETS_PATH = '.env'
+ROBOT_SETTINGS_PATH = 'robot.yaml'
 
 # DATABASE
 DB_USER = ''
@@ -31,10 +36,11 @@ UPDATE_ERROR_LOGS_PATH = 'data/logs/update_db_error.log'
 
 
 # RABBITMQ
-RABBITMQ_USE = False
+RABBITMQ_USE = True
 RABBITMQ_HOST = "localhost"
 RABBITMQ_PORT = 5672
-RABBITMQ_SECRETS = 'services/rabbitmq/secrets.env'
+RABBITMQ_DEFAULT_USER = 'rabbit'
+RABBITMQ_DEFAULT_PASS = 'rabbit'
 QUEUE_POST_LINKS = 'post_links'
 QUEUE_ACCOUNT_LINKS = 'account_links'
 QUEUE_POSTPROCESSING_ACCOUNTS = 'predict_accounts'
@@ -56,11 +62,9 @@ ACCOUNT_LINKS_PATH = ''
 
 
 # Переопределение дефолтных настроек
-ROBOT_SETTINGS_PATH = 'robot.yaml'
 try:
     with open(ROBOT_SETTINGS_PATH, 'r', encoding='utf-8') as f:
         print(f'Переопределяю настройки из файла {ROBOT_SETTINGS_PATH}')
-        # Используем safe_load для безопасности
         secrets = yaml.safe_load(f)
         for key, value in secrets.items():
             globals()[key] = value
@@ -68,21 +72,10 @@ except FileNotFoundError:
     print(f'Файл {ROBOT_SETTINGS_PATH} не найден. Используются настройки по умолчанию.')
 
 
+load_dotenv(dotenv_path=SECRETS_PATH)
+RABBITMQ_DEFAULT_USER = os.getenv("RABBITMQ_DEFAULT_USER")
+RABBITMQ_DEFAULT_PASS = os.getenv("RABBITMQ_DEFAULT_PASS")
+
+
 SQLALCHEMY_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-
-if RABBITMQ_USE is True:
-    import os
-    from dotenv import load_dotenv
-
-    load_dotenv(dotenv_path=RABBITMQ_SECRETS)
-    RABBITMQ_DEFAULT_USER = os.getenv("RABBITMQ_DEFAULT_USER")
-    RABBITMQ_DEFAULT_PASS = os.getenv("RABBITMQ_DEFAULT_PASS")
-    # RABBITMQ_CONNECTION = ConnectionParameters(
-    #     host=RABBITMQ_HOST,
-    #     port=RABBITMQ_PORT,
-    #     credentials=PlainCredentials(username=RABBITMQ_DEFAULT_USER, password=RABBITMQ_DEFAULT_PASS)
-    # )
-
-
