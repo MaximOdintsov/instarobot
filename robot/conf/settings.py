@@ -8,13 +8,14 @@ ROBOT_SETTINGS_PATH = 'robot.yaml'
 # DATABASE
 DB_USER = ''
 DB_PASSWORD = ''
-DB_HOST = ''
+DB_HOST = 'localhost'
 DB_PORT = 5432
 DB_NAME = ''
 
 # MAIN PATHS
 LOGS_ROOT = 'data/logs'
 SCREENSHOT_ROOT = 'data/screenshots'
+DB_DUMPS_ROOT = 'data/db_dumps'
 COMMANDS_ROOT = 'robot/management/commands'
 ACCOUNT_TYPE_MODEL_PATH = 'robot/ml/models/account_type_1.pkl'
 
