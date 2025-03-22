@@ -71,12 +71,9 @@ class RobotCommand(MultiInstagramAccountDriver):
 
                 print(f'Отправляю ссылку {account_link} в очередь "{settings.QUEUE_ACCOUNT_LINKS}"...')
                 # Отправляем ссылку на аккаунт в соответствующую очередь
-                msg = Message(
-                    body=account_link.encode(),
-                    delivery_mode=DeliveryMode.PERSISTENT,
-                )
+                msg = Message(body=account_link.encode(), delivery_mode=DeliveryMode.PERSISTENT)
                 await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_ACCOUNT_LINKS)
-                print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь "{settings.QUEUE_ACCOUNT_LINKS}".')
+                print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь.')
             await message.ack()  # Подтверждаем сообщение после успешной обработки
         except Exception as e:
             print(f"Ошибка обработки: {e}. driver: {self.driver}")

@@ -41,7 +41,7 @@ RABBITMQ_DEFAULT_USER = 'rabbit'
 RABBITMQ_DEFAULT_PASS = 'rabbit'
 QUEUE_POST_LINKS = 'post_links'
 QUEUE_ACCOUNT_LINKS = 'account_links'
-QUEUE_POSTPROCESS_ACCOUNTS = 'postprocess_accounts'
+QUEUE_ACCOUNT_POSTS = 'account_posts'
 QUEUE_PREDICT_ACCOUNTS = 'predict_accounts'
 
 # AUTH DATA: List[dict, dict]

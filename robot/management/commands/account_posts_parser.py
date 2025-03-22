@@ -34,6 +34,13 @@ class RobotCommand(MultiInstagramAccountDriver):
         try:
             account_link = message.body.decode()
             print(f"Получена ссылка на аккаунт: {account_link}")
+            account_object = await get_object_by_filter(
+                async_session_factory=self.async_session,
+                model=Account,
+                filters={'link': account_link}
+            )
+            if not account_object:
+                raise Exception(f'Аккаунт {account_link} не существует в БД.')
 
             # Переход на страницу аккаунта
             open_link(driver=self.driver, link=account_link)
@@ -76,7 +83,7 @@ class RobotCommand(MultiInstagramAccountDriver):
                         print(f'Отправляю ссылку {link} в очередь "{settings.QUEUE_ACCOUNT_LINKS}"...')
                         msg = Message(body=link.encode(), delivery_mode=DeliveryMode.PERSISTENT)
                         await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_ACCOUNT_LINKS)
-                        print(f'Ссылка на аккаунт "{link}" отправлена в очередь "{settings.QUEUE_ACCOUNT_LINKS}".')
+                        print(f'Ссылка на аккаунт "{link}" отправлена в очередь.')
                     else:
                         raise Exception(f'Ошибка сохранения данных в БД')
 
@@ -106,17 +113,13 @@ class RobotCommand(MultiInstagramAccountDriver):
                     if post_object:
                         print(f'Сохранил пост в БД: {post_object}')
                         async with self.async_session() as session:
-                            account = await session.merge(account)
+                            account_object = await session.merge(account_object)
                             post_object = await session.merge(post_object)
 
-                            # Явно загружаем связанные объекты, чтобы убедиться, что коллекции инициализированы
-                            # await session.refresh(account, attribute_names=["posts"])
-                            # await session.refresh(post_object, attribute_names=["accounts"])
-
                             # Проверяем, нет ли account в post_object.accounts
-                            if all(a.id != account.id for a in post_object.accounts):
+                            if all(a.id != account_object.id for a in post_object.accounts):
                                 print(f'Аккаунта нет в post_object.accounts: "{post_object.accounts}". Добавляю...')
-                                post_object.accounts.append(account)
+                                post_object.accounts.append(account_object)
 
                             await session.commit()
                             print(f'Закоммитил. post_object.accounts: {post_object.accounts}')
@@ -158,11 +161,11 @@ class RobotCommand(MultiInstagramAccountDriver):
             # Ограничиваем количество не подтверждённых сообщений до 1
             await self.channel.set_qos(prefetch_count=1)
             # Объявляем очереди (если их ещё нет)
-            await self.channel.declare_queue(settings.QUEUE_POSTPROCESS_ACCOUNTS, durable=True)
+            await self.channel.declare_queue(settings.QUEUE_ACCOUNT_POSTS, durable=True)
             await self.channel.declare_queue(settings.QUEUE_ACCOUNT_LINKS, durable=True)
             await self.channel.declare_queue(settings.QUEUE_PREDICT_ACCOUNTS, durable=True)
             # Получаем очередь для потребления сообщений
-            queue = await self.channel.declare_queue(settings.QUEUE_POST_LINKS, durable=True)
+            queue = await self.channel.declare_queue(settings.QUEUE_ACCOUNT_POSTS, durable=True)
             # Запускаем потребление сообщений
             await queue.consume(self.account_posts_parser)
             print("Ожидание сообщений. Для остановки нажмите CTRL+C")

@@ -68,12 +68,9 @@ class RobotCommand(MultiInstagramAccountDriver):
                 print(f'Сохранил пост в БД: {post_object}')
 
             print(f'Отправляю ссылку {post_link} в очередь "{settings.QUEUE_POST_LINKS}"...')
-            msg = Message(
-                body=post_link.encode(),
-                delivery_mode=DeliveryMode.PERSISTENT,
-            )
+            msg = Message(body=post_link.encode(), delivery_mode=DeliveryMode.PERSISTENT)
             await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_POST_LINKS)
-            print(f'Ссылка на пост "{post_link}" отправлена в очередь "{settings.QUEUE_POST_LINKS}".')
+            print(f'Ссылка на пост "{post_link}" отправлена в очередь.')
         return True
 
     async def main(self):
