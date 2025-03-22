@@ -14,24 +14,32 @@ class Base(DeclarativeBase):
 class ACCOUNT_STATUS(enum.IntEnum):
     PARSING = 5
     POSTPROCESSING = 15
+    PREDICTING = 25
     FAILED = 20
     READY = 30
     ANNOTATED = 40
     VALIDATED = 100
 
 
-# class POST_STATUS(enum.IntEnum):
-#     PARSING = 5
-#     READY = 10
+class POST_STATUS(enum.IntEnum):
+    PARSING = 5  # Спарсил только ссылку на пост
+    READY = 10  # Спарсил ссылки на аккаунты в посте и комментариях к нему
+    ANNOTATED = 20  # Спарсил информацию о посте
 
 
 class AccountType(enum.Enum):
     UNKNOWN = "UNKNOWN"
     ARTIST = "ARTIST"
+    RAP_ARTIST = "RAP_ARTIST"
     BEATMAKER = "BEATMAKER"
     LABEL = "LABEL"
     MARKET = "MARKET"
     COMMUNITY = "COMMUNITY"
+    BLOGGER = "BLOGGER"
+    DANCER = "DANCER"
+    DESIGNER = "DESIGNER"
+    DJ = "DJ"
+    PHOTOGRAPHER = "PHOTOGRAPHER"
     OTHER = "OTHER"
 
 
@@ -61,7 +69,8 @@ class Account(Base):
     posts = relationship(
         "AccountPost",
         secondary=account_post_association,
-        back_populates="accounts"
+        back_populates="accounts",
+        lazy="selectin"
     )
 
 
@@ -70,16 +79,16 @@ class AccountPost(Base):
 
     link = Column(String, unique=True, nullable=False)
     data = Column(JSON, default=dict)
-    # status = Column(
-    #     Integer,
-    #     nullable=False,
-    #     default=POST_STATUS.PARSING,
-    #     server_default=text("5")
-    # )
-    # Добавляем отношение "многие ко многим" к аккаунтам
+    status = Column(
+        Integer,
+        nullable=False,
+        default=POST_STATUS.PARSING,
+        server_default=text("5")
+    )
     accounts = relationship(
         "Account",
         secondary=account_post_association,
-        back_populates="posts"
+        back_populates="posts",
+        lazy="selectin"
     )
 

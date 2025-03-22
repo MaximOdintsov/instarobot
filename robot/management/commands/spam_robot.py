@@ -6,7 +6,7 @@ import random
 from robot.helpers.selenium_management import start_driver, close_driver
 from robot.helpers.utils import validate_instagram_url, ACCOUNT_VALUE
 from robot.helpers.logs import capture_output_to_file
-from robot.robot import auth, account_follow, account_send_message, account_get_post_links, account_send_comment
+from robot.robot import simple_auth, account_follow, account_send_message, account_get_post_links, account_send_comment
 from robot.conf import settings
 
 
@@ -41,7 +41,7 @@ def main(links_num, is_follow, is_message, is_comment):
             raise Exception(f'Нет username: "{username}" или password: "{password}"')
 
         driver = start_driver()
-        auth(driver=driver, username=username, password=password)
+        simple_auth(driver=driver, username=username, password=password)
 
         # Обрабатываем следующие `links_num` аккаунтов из списка
         for account_link in all_links[account_counter : account_counter + links_num]:

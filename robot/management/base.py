@@ -4,8 +4,25 @@ from robot.helpers.selenium_management import start_driver, close_driver
 from robot.robot import cookies_auth
 from robot.conf import settings
 
+import asyncio
+import sys
 
-class MultiInstagramAccountDriver:
+
+class BaseCommand:
+    async def shutdown(self):
+        """Безопасное завершение работы: отмена всех задач и выход из скрипта."""
+        print("Выполняется безопасное завершение работы скрипта...")
+        # Отменяем все задачи, кроме текущей
+        pending = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+        for task in pending:
+            task.cancel()
+        # Ожидаем завершения всех отменённых задач
+        await asyncio.gather(*pending, return_exceptions=True)
+        # При использовании контекстных менеджеров (async with connection) соединения закрываются автоматически
+        sys.exit(0)
+
+
+class MultiInstagramAccountDriver(BaseCommand):
     """
     Класс, который создает driver и автоматически авторизуется в instagram.
     Зависит от функции robot.robot.auth
@@ -73,3 +90,5 @@ class MultiInstagramAccountDriver:
 
         self.close_current_driver()
         raise Exception("Все аккаунты недоступны для авторизации.")
+
+

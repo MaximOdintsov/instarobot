@@ -22,8 +22,8 @@ def get_engine_and_session():
     async_engine: AsyncEngine = create_async_engine(
         settings.DATABASE_URL,
         # echo=True,
-        pool_size=20,  # Adjust pool size based on your workload
-        max_overflow=50,  # Adjust maximum overflow connections
+        pool_size=100,  # Adjust pool size based on your workload
+        max_overflow=150,  # Adjust maximum overflow connections
         pool_recycle=3600,  # Periodically recycle connections (optional)
         pool_pre_ping=True
     )
@@ -65,7 +65,6 @@ async def get_object_by_filter(
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
             await session.rollback()
-            # Логируйте или обрабатывайте ошибку по необходимости
             print(f"[get_object_by_filter] DB Error: {e}")
             return None
 
@@ -89,7 +88,6 @@ async def get_objects_by_filter(
             return result.scalars().all()
         except SQLAlchemyError as e:
             await session.rollback()
-            # Логируйте или обрабатывайте ошибку по необходимости
             print(f"[get_objects_by_filter] DB Error: {e}")
             return []
 
@@ -102,8 +100,8 @@ async def create_or_update_object(
 ) -> Optional[T]:
     """
     Создать или обновить объект в базе данных.
-    Если объект с указанными фильтрами существует – обновить,
-    иначе создать.
+    Если объект с указанными фильтрами существует – обновить;
+    Если объект с указанными фильтрами еще не существует - создать.
 
     :param async_session_factory: Фабрика асинхронных сессий.
     :param model: Модель (класс), унаследованная от Base.
@@ -178,6 +176,5 @@ async def delete_objects(
                 return False
         except SQLAlchemyError as e:
             await session.rollback()
-            # Логируйте или обрабатывайте ошибку по необходимости
             print(f"[delete_object] DB Error: {e}")
             return False

@@ -54,13 +54,13 @@ class RobotCommand(MultiInstagramAccountDriver):
                     print(f'Сохранил аккаунт в БД: {account_object}')
 
                 # Отправляем ссылку на аккаунт в соответствующую очередь
-                print(f'Отправляю ссылку {account_link} в очередь "{settings.QUEUE_POSTPROCESSING_ACCOUNTS}"...')
+                print(f'Отправляю ссылку {account_link} в очередь "{settings.QUEUE_POSTPROCESS_ACCOUNTS}"...')
                 msg = Message(
                     body=account_link.encode(),
                     delivery_mode=DeliveryMode.PERSISTENT,
                 )
-                await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_POSTPROCESSING_ACCOUNTS)
-                print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь "{settings.QUEUE_POSTPROCESSING_ACCOUNTS}"')
+                await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_POSTPROCESS_ACCOUNTS)
+                print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь "{settings.QUEUE_POSTPROCESS_ACCOUNTS}"')
             else:
                 account_object = await create_or_update_object(
                     async_session_factory=self.async_session,
@@ -77,9 +77,11 @@ class RobotCommand(MultiInstagramAccountDriver):
             await message.ack()  # Подтверждаем сообщение после успешной обработки
             time.sleep(random.randrange(5, 10))
         except Exception as e:
-            self.driver = self.switch_account()
             print(f"Ошибка обработки: {e}")
+            self.driver = self.switch_account()
             await message.reject(requeue=True)  # Отклоняем сообщение, чтобы оно осталось в очереди
+            if not self.driver:
+                await self.shutdown()
 
     async def main(self):
         connection = await connect_robust(
@@ -92,7 +94,7 @@ class RobotCommand(MultiInstagramAccountDriver):
             await self.channel.set_qos(prefetch_count=1)
             # Объявляем очереди (если их ещё нет)
             await self.channel.declare_queue(settings.QUEUE_ACCOUNT_LINKS, durable=True)
-            await self.channel.declare_queue(settings.QUEUE_POSTPROCESSING_ACCOUNTS, durable=True)
+            await self.channel.declare_queue(settings.QUEUE_POSTPROCESS_ACCOUNTS, durable=True)
             # Получаем очередь для потребления сообщений
             queue = await self.channel.declare_queue(settings.QUEUE_ACCOUNT_LINKS, durable=True)
             # Запускаем потребление сообщений

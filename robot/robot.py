@@ -2,6 +2,7 @@ import random
 import time
 import pickle
 from pathlib import Path
+from typing import List
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -149,7 +150,7 @@ def turn_to_posts_page(driver: webdriver, query: str):
     return True
 
 
-def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10) -> tuple[list, bool]:
+def get_post_links(driver: webdriver, wait_time: int = 5, max_scrolls: int = 10) -> tuple[List[str], bool]:
     """
     Скроллинг страниц и поиск ссылок
     """
@@ -507,3 +508,70 @@ def account_send_comment(driver: webdriver, post_link: str, comment: str) -> boo
         return True
     print(f'Не получилось написать комментарий к посту: {post_link}')
     return False
+
+
+
+####################
+### Парсинг постов аккаунта
+####################
+
+def get_post_accounts_links(driver: webdriver) -> list:
+    """
+    Получение ссылок на аккаунты из поста (автор поста и комментаторы)
+    """
+    link_elements = get_link_elements(driver)
+    all_links = get_links(link_elements=link_elements)
+    print(f'Получил {len(all_links)} ссылок из поста: {all_links}')
+    return all_links
+
+
+def parsing_post_data(driver: webdriver) -> tuple:
+    post_header_element = get_wait_element(
+        driver=driver,
+        by=By.CSS_SELECTOR,
+        searched_elem='body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div.xb88tzc.xw2csxc.x1odjw0f.x5fp0pe.x1qjc9v5.xjbqb8w.x1lcm9me.x1yr5g0i.xrt01vj.x10y3i5r.xr1yuqi.xkrivgy.x4ii5y1.x1gryazu.x15h9jz8.x47corl.xh8yej3.xir0mxb.x1juhsu6 > div > article > div > div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x1iyjqo2.x5wqa0o.xln7xf2.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x65f84u.x1vq45kp.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.x11njtxf > div > div > div._aasi > div > header > div._aaqy._aaqz > div._aaql',
+        attempts=1,
+        delay=5,
+        is_error=False
+    )
+    post_description_element = get_wait_element(
+        driver=driver,
+        by=By.CSS_SELECTOR,
+        searched_elem='body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div.xb88tzc.xw2csxc.x1odjw0f.x5fp0pe.x1qjc9v5.xjbqb8w.x1lcm9me.x1yr5g0i.xrt01vj.x10y3i5r.xr1yuqi.xkrivgy.x4ii5y1.x1gryazu.x15h9jz8.x47corl.xh8yej3.xir0mxb.x1juhsu6 > div > article > div > div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x1iyjqo2.x5wqa0o.xln7xf2.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x65f84u.x1vq45kp.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.x11njtxf > div > div > div.x78zum5.xdt5ytf.x1q2y9iw.x1n2onr6.xh8yej3.x9f619.x1iyjqo2.x18l3tf1.x26u7qi.xy80clv.xexx8yu.x4uap5.x18d9i69.xkhd6sd > div.x78zum5.xdt5ytf.x1iyjqo2.xs83m0k.x2lwn1j.x1odjw0f.x1n2onr6.x9ek82g.x6ikm8r.xdj266r.x11i5rnm.x4ii5y1.x1mh8g0r.xexx8yu.x1pi30zi.x18d9i69.x1swvt13 > ul > div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf > li > div > div > div._a9zr > div.xt0psk2',
+        attempts=1,
+        delay=5,
+        is_error=False
+    )
+    post_likes_element = get_wait_element(
+        driver=driver,
+        by=By.CSS_SELECTOR,
+        searched_elem='body > div.x1n2onr6.xzkaem6 > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div.xb88tzc.xw2csxc.x1odjw0f.x5fp0pe.x1qjc9v5.xjbqb8w.x1lcm9me.x1yr5g0i.xrt01vj.x10y3i5r.xr1yuqi.xkrivgy.x4ii5y1.x1gryazu.x15h9jz8.x47corl.xh8yej3.xir0mxb.x1juhsu6 > div > article > div > div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x1iyjqo2.x5wqa0o.xln7xf2.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x65f84u.x1vq45kp.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.x11njtxf > div > div > div.x78zum5.xdt5ytf.x1q2y9iw.x1n2onr6.xh8yej3.x9f619.x1iyjqo2.x18l3tf1.x26u7qi.xy80clv.xexx8yu.x4uap5.x18d9i69.xkhd6sd > section.x12nagc.x182iqb8.x1pi30zi.x1swvt13 > div > div > span > a > span > span',
+        attempts=1,
+        delay=5,
+        is_error=False
+    )
+    
+    post_header = post_header_element.text if post_header_element else ''
+    post_description = post_description_element.text if post_description_element else ''
+    post_likes = post_likes_element.text if post_likes_element else 0
+
+    return post_header, post_description, post_likes
+
+
+def get_account_posts_elements(driver: webdriver):
+    account_post_parent_element = get_wait_element(
+        driver=driver,
+        by=By.XPATH,
+        searched_elem='/html/body/div[1]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/div[2]',
+        attempts=1,
+        delay=5,
+        is_error=True
+    )
+    account_post_elements = get_link_elements(parent_element=account_post_parent_element)
+    return account_post_elements
+    
+    
+    
+    
+    
+

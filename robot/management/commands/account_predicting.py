@@ -16,7 +16,7 @@ class RobotCommand:
         self.channel = None
         self.async_engine, self.async_session = get_engine_and_session()
 
-    async def postprocess_account_data(self, message):
+    async def account_predicting(self, message):
         try:
             account_link = message.body.decode()
             print(f"Получена ссылка на аккаунт: {account_link}")
@@ -77,18 +77,18 @@ class RobotCommand:
             # Ограничиваем количество не подтверждённых сообщений до 1
             await self.channel.set_qos(prefetch_count=1)
             # Объявляем очереди (если их ещё нет)
-            await self.channel.declare_queue(settings.QUEUE_POSTPROCESSING_ACCOUNTS, durable=True)
+            await self.channel.declare_queue(settings.QUEUE_PREDICT_ACCOUNTS, durable=True)
             # Получаем очередь для потребления сообщений
-            queue = await self.channel.declare_queue(settings.QUEUE_POSTPROCESSING_ACCOUNTS, durable=True)
+            queue = await self.channel.declare_queue(settings.QUEUE_PREDICT_ACCOUNTS, durable=True)
             # Запускаем потребление сообщений
-            await queue.consume(self.postprocess_account_data)
+            await queue.consume(self.account_predicting)
             print("Ожидание сообщений. Для остановки нажмите CTRL+C")
             # Блокируем выполнение, чтобы держать соединение открытым
             await asyncio.Future()  # работает бесконечно
 
 
-@click.command(name="postprocess_account_data")
-@capture_output_to_file("postprocess_account_data")
+@click.command(name="account_predicting")
+@capture_output_to_file("account_predicting")
 def run():
     command = RobotCommand()
     asyncio.run(command.main())
