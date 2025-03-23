@@ -44,14 +44,17 @@ class RobotCommand(MultiInstagramAccountDriver):
 
             # Переход на страницу аккаунта
             open_link(driver=self.driver, link=account_link)
-            time.sleep(random.randrange(4, 6))
+            time.sleep(random.randrange(6, 9))
 
             # Парсинг постов аккаунта
             account_post_elements = get_account_posts_elements(driver=self.driver)
+            if (account_object.data.get('posts', 0) > 0) and (len(account_post_elements) == 0):
+                raise Exception(f'У аккаунта "{account_link}" не найдены посты!')
+
             for elem in account_post_elements:
                 self.driver.switch_to.active_element.send_keys(Keys.ESCAPE)
                 elem.click()
-                time.sleep(random.randrange(3, 5))
+                time.sleep(random.randrange(5, 15))
 
                 # Сохранение ссылок на аккаунты, найденные в посте
                 all_account_links = get_post_accounts_links(driver=self.driver)
