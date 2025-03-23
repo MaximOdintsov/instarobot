@@ -1,5 +1,4 @@
 import random
-import uuid
 import asyncio
 import click
 import time
@@ -9,7 +8,7 @@ from robot.conf import settings
 from robot.robot import parsing_account_info, check_error
 from robot.helpers.selenium_management import save_screenshot
 from robot.helpers.logs import capture_output_to_file
-from robot.database.orm import get_engine_and_session, create_or_update_object, delete_objects
+from robot.database.orm import get_engine_and_session, create_or_update_object
 from robot.database.models import Account, ACCOUNT_STATUS
 from robot.management.base import MultiInstagramAccountDriver
 

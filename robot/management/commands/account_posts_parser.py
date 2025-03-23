@@ -1,14 +1,12 @@
-import sys
 import random
 import time
-import uuid
 import asyncio
 import click
 from selenium.webdriver.common.keys import Keys
 from aio_pika import connect_robust, Message, DeliveryMode
 
 from robot.conf import settings
-from robot.robot import post_parsing, get_account_posts_elements, get_post_accounts_links, parsing_post_data, check_error
+from robot.robot import get_account_posts_elements, get_post_accounts_links, parsing_post_data, check_error
 from robot.helpers.utils import validate_instagram_url, ACCOUNT_VALUE, POST_VALUE
 from robot.helpers.logs import capture_output_to_file
 from robot.helpers.selenium_management import open_link
@@ -55,7 +53,8 @@ class RobotCommand(MultiInstagramAccountDriver):
         else:
             raise Exception(f'Ошибка сохранения данных в БД')
     
-    async def save_post(self, link: str, post_header: str, post_description: str, post_likes: int):
+    async def save_post(self, account_object: Account, link: str, post_header: str, post_description: str,
+                        post_likes: int):
         print(f'Записываю данные о посте: {link}...')
         post_object = await create_or_update_object(
             async_session_factory=self.async_session,
@@ -86,7 +85,6 @@ class RobotCommand(MultiInstagramAccountDriver):
         else:
             raise Exception(f'Ошибка сохранения данных в БД')
 
-    
     async def account_posts_parser(self, message):
         # Автоматическое подтверждение сообщения через контекстный менеджер
         try:
@@ -135,7 +133,8 @@ class RobotCommand(MultiInstagramAccountDriver):
                         print(f'Пропускаю ссылку "{post_link}" из-за несоответствия шаблону.')
                         continue
                     await self.save_post(
-                        link=post_link, 
+                        account_object=account_object,
+                        link=post_link,
                         post_header=post_header, 
                         post_description=post_description, 
                         post_likes=post_likes

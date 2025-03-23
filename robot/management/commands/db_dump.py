@@ -1,5 +1,6 @@
-import subprocess
 import os
+import uuid
+import subprocess
 from datetime import datetime
 import click
 
@@ -34,7 +35,7 @@ def dump_postgres_db(db_name, user, password, host, port, output_file):
 
 @click.command(name="db_dump")
 def run():
-    output_file = f'{settings.DB_DUMPS_ROOT}/{datetime.now().date()}.bak'
+    output_file = f'{settings.DB_DUMPS_ROOT}/{datetime.now().date()}_{uuid.uuid4()}.bak'
     dump_postgres_db(
         db_name=settings.DB_NAME,
         user=settings.DB_USER,
