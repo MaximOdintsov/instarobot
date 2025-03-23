@@ -8,7 +8,7 @@ from selenium.webdriver.common.keys import Keys
 from aio_pika import connect_robust, Message, DeliveryMode
 
 from robot.conf import settings
-from robot.robot import post_parsing, get_account_posts_elements, get_post_accounts_links, parsing_post_data
+from robot.robot import post_parsing, get_account_posts_elements, get_post_accounts_links, parsing_post_data, check_error
 from robot.helpers.utils import validate_instagram_url, ACCOUNT_VALUE, POST_VALUE
 from robot.helpers.logs import capture_output_to_file
 from robot.helpers.selenium_management import open_link
@@ -29,6 +29,64 @@ class RobotCommand(MultiInstagramAccountDriver):
         self.channel = None
         self.async_engine, self.async_session = get_engine_and_session()
 
+    async def save_account(self, link: str):
+        print(f'Проверяю аккаунт в БД: "{link}"...')
+        new_account_object = await get_object_by_filter(
+            async_session_factory=self.async_session,
+            model=Account,
+            filters={'link': link}
+        )
+        if new_account_object:
+            print(f'Аккаунт с ссылкой {link} уже есть в БД, пропускаю...')
+            return
+        print(f'Создаю аккаунт в БД: "{link}"...')
+        new_account_object = await create_or_update_object(
+            async_session_factory=self.async_session,
+            model=Account,
+            filters={'link': link},
+            defaults={'link': link, 'status': ACCOUNT_STATUS.PARSING}
+        )
+        if new_account_object:
+            print(f'Сохранил аккаунт в БД: {new_account_object}.')
+            print(f'Отправляю ссылку {link} в очередь "{settings.QUEUE_ACCOUNT_LINKS}"...')
+            msg = Message(body=link.encode(), delivery_mode=DeliveryMode.PERSISTENT)
+            await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_ACCOUNT_LINKS)
+            print(f'Ссылка на аккаунт "{link}" отправлена в очередь.')
+        else:
+            raise Exception(f'Ошибка сохранения данных в БД')
+    
+    async def save_post(self, link: str, post_header: str, post_description: str, post_likes: int):
+        print(f'Записываю данные о посте: {link}...')
+        post_object = await create_or_update_object(
+            async_session_factory=self.async_session,
+            model=AccountPost,
+            filters={'link': link},
+            defaults={
+                'data': {
+                    'post_header': post_header,
+                    'post_description': post_description,
+                    'post_likes': post_likes
+                },
+                'status': POST_STATUS.ANNOTATED
+            }
+        )
+        if post_object:
+            print(f'Сохранил пост в БД: {post_object}')
+            async with self.async_session() as session:
+                account_object = await session.merge(account_object)
+                post_object = await session.merge(post_object)
+
+                # Проверяем, нет ли account в post_object.accounts
+                if all(a.id != account_object.id for a in post_object.accounts):
+                    print(f'Аккаунта нет в post_object.accounts: "{post_object.accounts}". Добавляю...')
+                    post_object.accounts.append(account_object)
+
+                await session.commit()
+                print(f'Закоммитил. post_object.accounts: {post_object.accounts}')
+        else:
+            raise Exception(f'Ошибка сохранения данных в БД')
+
+    
     async def account_posts_parser(self, message):
         # Автоматическое подтверждение сообщения через контекстный менеджер
         try:
@@ -45,6 +103,9 @@ class RobotCommand(MultiInstagramAccountDriver):
             # Переход на страницу аккаунта
             open_link(driver=self.driver, link=account_link)
             time.sleep(random.randrange(6, 9))
+
+            # Проверка доступности страницы
+            check_error(driver=self.driver)
 
             # Парсинг постов аккаунта
             account_post_elements = get_account_posts_elements(driver=self.driver)
@@ -63,71 +124,22 @@ class RobotCommand(MultiInstagramAccountDriver):
                     if validate_instagram_url(link) != ACCOUNT_VALUE:
                         print(f'Пропускаю ссылку "{link}" из-за несоответствия шаблону.')
                         continue
-
-                    print(f'Проверяю аккаунт в БД: "{link}"...')
-                    new_account_object = await get_object_by_filter(
-                        async_session_factory=self.async_session,
-                        model=Account,
-                        filters={'link': link}
-                    )
-                    if new_account_object:
-                        print(f'Аккаунт с ссылкой {link} уже есть в БД, пропускаю...')
-                        continue
-
-                    print(f'Создаю аккаунт в БД: "{link}"...')
-                    new_account_object = await create_or_update_object(
-                        async_session_factory=self.async_session,
-                        model=Account,
-                        filters={'link': link},
-                        defaults={'link': link, 'status': ACCOUNT_STATUS.PARSING}
-                    )
-                    if new_account_object:
-                        print(f'Сохранил аккаунт в БД: {new_account_object}.')
-                        print(f'Отправляю ссылку {link} в очередь "{settings.QUEUE_ACCOUNT_LINKS}"...')
-                        msg = Message(body=link.encode(), delivery_mode=DeliveryMode.PERSISTENT)
-                        await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_ACCOUNT_LINKS)
-                        print(f'Ссылка на аккаунт "{link}" отправлена в очередь.')
-                    else:
-                        raise Exception(f'Ошибка сохранения данных в БД')
+                    await self.save_account(link=link)
 
                 # Парсинг данных поста и привязка их к аккаунту
                 post_header, post_description, post_likes = parsing_post_data(self.driver)
                 print(f'post_header, post_description, post_likes: {post_header, post_description, post_likes}')
-                if post_header or post_description or post_likes:
+                if post_header or post_description or post_likes:   
                     post_link = self.driver.current_url
                     if validate_instagram_url(post_link) != POST_VALUE:
                         print(f'Пропускаю ссылку "{post_link}" из-за несоответствия шаблону.')
                         continue
-
-                    print(f'Записываю данные о посте: {post_link}...')
-                    post_object = await create_or_update_object(
-                        async_session_factory=self.async_session,
-                        model=AccountPost,
-                        filters={'link': post_link},
-                        defaults={
-                            'data': {
-                                'post_header': post_header,
-                                'post_description': post_description,
-                                'post_likes': post_likes
-                            },
-                            'status': POST_STATUS.ANNOTATED
-                        }
+                    await self.save_post(
+                        link=post_link, 
+                        post_header=post_header, 
+                        post_description=post_description, 
+                        post_likes=post_likes
                     )
-                    if post_object:
-                        print(f'Сохранил пост в БД: {post_object}')
-                        async with self.async_session() as session:
-                            account_object = await session.merge(account_object)
-                            post_object = await session.merge(post_object)
-
-                            # Проверяем, нет ли account в post_object.accounts
-                            if all(a.id != account_object.id for a in post_object.accounts):
-                                print(f'Аккаунта нет в post_object.accounts: "{post_object.accounts}". Добавляю...')
-                                post_object.accounts.append(account_object)
-
-                            await session.commit()
-                            print(f'Закоммитил. post_object.accounts: {post_object.accounts}')
-                    else:
-                        raise Exception(f'Ошибка сохранения данных в БД')
 
             print(f'Обновляю статус аккаунта "{account_link}" в БД...')
             account_object = await create_or_update_object(
@@ -138,12 +150,10 @@ class RobotCommand(MultiInstagramAccountDriver):
             )
             if account_object:
                 print(f'Сохранил аккаунт в БД: {account_object}')
-
                 print(f'Отправляю ссылку {account_link} в очередь "{settings.QUEUE_PREDICT_ACCOUNTS}"...')
                 msg = Message(body=account_link.encode(), delivery_mode=DeliveryMode.PERSISTENT)
                 await self.channel.default_exchange.publish(msg, routing_key=settings.QUEUE_PREDICT_ACCOUNTS)
                 print(f'Ссылка на аккаунт "{account_link}" отправлена в очередь.')
-
                 await message.ack()  # Подтверждаем сообщение после успешной обработки
             else:
                 raise Exception(f'Ошибка сохранения данных в БД')

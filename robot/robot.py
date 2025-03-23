@@ -9,8 +9,26 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
-from robot.helpers.selenium_management import open_link, get_wait_element, get_wait_elements, get_link_elements, get_links
+from robot.helpers.selenium_management import open_link, get_wait_element, get_wait_elements, get_link_elements, get_links, save_screenshot
 from robot.helpers.utils import parse_activity_data
+
+
+def check_error(driver: webdriver):
+    """
+    Проверяет, доступна ли страница
+    """
+    error_elem = get_wait_element(
+        driver=driver,
+        by=By.CSS_SELECTOR,
+        searched_elem="svg[aria-label='Ошибка']",
+        attempts=1,
+        delay=4,
+        is_error=False
+    )
+    if error_elem:
+        screen_path = save_screenshot(driver, 'page_not_access')
+        raise Exception(f'Страницы недоступна. Скриншот: {screen_path}')
+    return True
 
 
 ####################
@@ -250,9 +268,6 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     """
     Парсинг основной информации об аккаунте
     """
-    driver.get(account_link)
-    time.sleep(random.randrange(2, 4))
-
     links_contacts = set()
     links_description = set()
     description = ''
@@ -269,6 +284,7 @@ def parsing_account_info(driver: webdriver, account_link: str) -> dict:
     )
     if confidential_account_element:
         return {}
+    
     
     # Парсинг описания аккаунта
     for i in [1, 2]:
@@ -514,7 +530,6 @@ def account_send_comment(driver: webdriver, post_link: str, comment: str) -> boo
 ####################
 ### Парсинг постов аккаунта
 ####################
-
 def get_post_accounts_links(driver: webdriver) -> list:
     """
     Получение ссылок на аккаунты из поста (автор поста и комментаторы)

@@ -6,7 +6,7 @@ import time
 from aio_pika import connect_robust, Message, DeliveryMode
 
 from robot.conf import settings
-from robot.robot import parsing_account_info
+from robot.robot import parsing_account_info, check_error
 from robot.helpers.selenium_management import save_screenshot
 from robot.helpers.logs import capture_output_to_file
 from robot.database.orm import get_engine_and_session, create_or_update_object, delete_objects
@@ -32,7 +32,15 @@ class RobotCommand(MultiInstagramAccountDriver):
             account_link = message.body.decode()
             print(f"Получена ссылка на аккаунт: {account_link}")
 
+            self.driver.get(account_link)
+            time.sleep(random.randrange(3, 5))
+            
+            # Проверка доступности страницы
+            check_error(driver=self.driver)
+
+            # Парсинг информации об аккаунте
             account_data = parsing_account_info(driver=self.driver, account_link=account_link)
+
             # Проверка данных на валидность (пусто или нет)
             data_is_empty = True
             for data_item in account_data.values():

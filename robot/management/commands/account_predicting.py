@@ -45,7 +45,7 @@ class RobotCommand:
                 })
                 print(f'df: {df}')
 
-                predicted_account_type = get_account_type(data=df, threshold=0.8).value
+                predicted_account_type = get_account_type(data=df, threshold=0.85).value
                 data['predicted_account_type'] = predicted_account_type
                 print(f'Предсказал тип аккаунта: "{predicted_account_type}"')
 
